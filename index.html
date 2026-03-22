@@ -53,17 +53,19 @@
     <aside id="sidebar"
         class="fixed md:relative inset-y-0 left-0 w-[260px] bg-white dark:bg-dashSide border-r border-slate-200 dark:border-dashBorder flex flex-col z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 shadow-2xl md:shadow-none">
 
-       <div class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-dashBorder shrink-0">
-   <div class="flex items-center shrink-0">
-    <img style="background-color: whitesmoke; padding: 3px; border-radius: 5px;" src="/RCDC/js/logo.webp" alt="Genus Logo" class="h-10 sm:h-12 w-auto object-contain shrink-0">
-</div>
-    
-    <button id="close-sidebar" class="text-slate-400 hover:text-emerald-500 transition md:hidden">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-    </button>
-</div>
+        <div
+            class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-dashBorder shrink-0">
+            <div class="flex items-center shrink-0">
+                <img style="background-color: whitesmoke; padding: 3px; border-radius: 5px;" src="/RCDC/js/logo.webp"
+                    alt="Genus Logo" class="h-10 sm:h-12 w-auto object-contain shrink-0">
+            </div>
+
+            <button id="close-sidebar" class="text-slate-400 hover:text-emerald-500 transition md:hidden">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
 
         <div class="p-6 flex-1 overflow-y-auto">
             <h3 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">Filters
@@ -209,19 +211,56 @@
 
         <div class="p-4 lg:p-6">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 items-stretch">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2 mb-6 items-stretch">
 
-                <div class="kpi-card flex flex-col items-center justify-center text-center p-4 h-full">
-                    <h3 class="text-[13px] font-bold text-slate-700 dark:text-slate-200">Total SAT Meters</h3>
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-2">SAT Completed</p>
-                    <p class="text-3xl font-bold text-slate-900 dark:text-white mb-1" id="val-total-meters">0</p>
-                    <p class="text-[10px] font-bold text-emerald-500 dark:text-emerald-400">▲ LIVE SYNC</p>
+                <div
+                    class="kpi-card flex flex-col items-center justify-between text-center p-4 bg-[#1e2230] border border-slate-700/50 rounded-2xl shadow-xl w-full max-w-[280px] min-h-[180px] transition-all duration-300">
+
+                    <div class="mb-1">
+                        <h3 class="text-[14px] font-bold text-white tracking-tight leading-tight">Total SAT Meters</h3>
+                        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">SAT Completed</p>
+                    </div>
+
+                    <div id="val-total-meters" class="text-white text-2xl font-black tracking-tight leading-none my-2">
+                        0
+                    </div>
+
+                    <div class="w-full h-px bg-slate-700/20 mb-1"></div>
+
+                    <div class="w-full">
+                        <div class="flex justify-between items-center px-1">
+                            <div class="text-left">
+                                <span
+                                    class="text-[8px] text-slate-500 font-extrabold tracking-tighter block uppercase">Comm</span>
+                                <div id="val-comm-meters" class="text-emerald-500 text-lg font-black leading-tight">
+                                    0
+                                </div>
+                            </div>
+
+                            <div class="w-px h-6 bg-slate-700/50"></div>
+
+                            <div class="text-right">
+                                <span
+                                    class="text-[8px] text-slate-500 font-extrabold tracking-tighter block uppercase">Non-Comm</span>
+                                <div id="val-noncomm-meters" class="text-rose-500 text-lg font-black leading-tight">
+                                    0
+                                </div>
+                            </div>
+                        </div>
+
+                        <p
+                            class="text-[8px] font-black text-emerald-500/80 mt-2 text-center tracking-[0.2em] uppercase">
+                            ▲ Live Sync
+                        </p>
+                    </div>
                 </div>
 
-                <div class="flex flex-col gap-4 h-full">
+                <div class="flex flex-col gap-2 h-full">
                     <div class="kpi-card flex-1 flex flex-col items-center justify-center text-center p-3">
-                        <h3 class="text-[12px] font-bold text-slate-700 dark:text-slate-200">Overall SLA Summary</h3>
-                        <p class="text-2xl font-bold text-slate-900 dark:text-white my-1" id="val-overall-sla">0.0%</p>
+                        <h3 class="text-[12px] font-bold text-slate-700 dark:text-slate-200">Overall SLA Summary
+                        </h3>
+                        <p class="text-2xl font-bold text-slate-900 dark:text-white my-1" id="val-overall-sla">0.0%
+                        </p>
                         <p class="text-[9px] font-bold text-slate-500" id="diff-overall-sla">-- FROM PREV MONTH</p>
                     </div>
                     <div class="kpi-card flex-1 flex flex-col items-center justify-center text-center p-3">
@@ -236,14 +275,16 @@
                     </h3>
                     <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Monthly</p>
                     <div class="flex w-full items-center justify-center mt-auto">
-                        <div class="w-1/2 border-r border-slate-300 dark:border-slate-700 px-2">
+                        <div class="w-1/2 border-r border-slate-300 dark:border-slate-700 pr-4">
                             <p class="text-[11px] text-slate-600 dark:text-slate-300 font-semibold mb-1">168 Hrs</p>
-                            <p class="text-xl font-bold text-slate-900 dark:text-white mb-1" id="val-bill-168">0.0%</p>
+                            <p class="text-[22px] font-bold text-slate-900 dark:text-white mb-1" id="val-bill-168">0.0%
+                            </p>
                             <p class="text-[9px] font-bold text-slate-500" id="diff-bill-168">-- FROM TARGET</p>
                         </div>
-                        <div class="w-1/2 px-2">
+                        <div class="w-1/2 px-3">
                             <p class="text-[11px] text-slate-600 dark:text-slate-300 font-semibold mb-1">72 Hrs</p>
-                            <p class="text-xl font-bold text-slate-900 dark:text-white mb-1" id="val-bill-72">0.0%</p>
+                            <p class="text-[22px] font-bold text-slate-900 dark:text-white mb-1" id="val-bill-72">0.0%
+                            </p>
                             <p class="text-[9px] font-bold text-slate-500" id="diff-bill-72">-- FROM TARGET</p>
                         </div>
                     </div>
@@ -253,27 +294,32 @@
                     <h3 class="text-[13px] font-bold text-slate-700 dark:text-slate-200">Load Survey SLA</h3>
                     <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Latest Date</p>
                     <div class="flex w-full items-center justify-center mt-auto">
-                        <div class="w-1/2 border-r border-slate-300 dark:border-slate-700 px-2">
+                        <div class="w-1/2 border-r border-slate-300 dark:border-slate-700 pr-4">
                             <p class="text-[11px] text-slate-600 dark:text-slate-300 font-semibold mb-1">12 Hrs</p>
-                            <p class="text-xl font-bold text-slate-900 dark:text-white mb-1" id="val-load-12">0.0%</p>
+                            <p class="text-[22px] font-bold text-slate-900 dark:text-white mb-1" id="val-load-12">0.0%
+                            </p>
                             <p class="text-[9px] font-bold text-slate-500" id="diff-load-12">-- FROM TARGET</p>
                         </div>
-                        <div class="w-1/2 px-2">
+                        <div class="w-1/2 px-3">
                             <p class="text-[11px] text-slate-600 dark:text-slate-300 font-semibold mb-1">8 Hrs</p>
-                            <p class="text-xl font-bold text-slate-900 dark:text-white mb-1" id="val-load-8">0.0%</p>
+                            <p class="text-[22px] font-bold text-slate-900 dark:text-white mb-1" id="val-load-8">0.0%
+                            </p>
                             <p class="text-[9px] font-bold text-slate-500" id="diff-load-8">-- FROM TARGET</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="kpi-card flex flex-col p-4 h-full border-t-4 border-t-rose-500">
-                    <h3 class="text-[13px] font-bold text-slate-700 dark:text-slate-200 text-center">Exclusions (Failed)
+                    <h3 class="text-[13px] font-bold text-slate-700 dark:text-slate-200 text-center">Exclusions
+                        (Failed)
                     </h3>
-                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mb-2 text-center">Non-Compliant Meters</p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mb-2 text-center">Non-Compliant Meters
+                    </p>
                     <div class="flex flex-col justify-between flex-1 mt-1 space-y-1.5">
                         <div
                             class="bg-rose-50 dark:bg-rose-500/10 rounded px-2 py-1.5 flex justify-between items-center border border-rose-100 dark:border-rose-500/20">
-                            <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300">Daily Energy</span>
+                            <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300">Daily
+                                Energy</span>
                             <div class="text-right">
                                 <span class="text-[12px] font-bold text-rose-600 dark:text-rose-400"
                                     id="excl-count-daily">0</span>
@@ -291,7 +337,8 @@
                         </div>
                         <div
                             class="bg-rose-50 dark:bg-rose-500/10 rounded px-2 py-1.5 flex justify-between items-center border border-rose-100 dark:border-rose-500/20">
-                            <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300">Bill 168Hrs</span>
+                            <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300">Bill
+                                168Hrs</span>
                             <div class="text-right">
                                 <span class="text-[12px] font-bold text-rose-600 dark:text-rose-400"
                                     id="excl-count-bill">0</span>
@@ -305,44 +352,84 @@
             <div class="mb-8 mt-2">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-[13px] font-bold text-slate-800 dark:text-white uppercase tracking-widest">SLA
-                        Performance & Breach Analysis <span class="text-emerald-500" id="trend-month-title"></span></h2>
+                        Performance & Breach Analysis <span class="text-emerald-500" id="trend-month-title"></span>
+                    </h2>
                 </div>
 
                 <div class="kpi-card p-4 md:p-6 mb-4 flex flex-col h-[380px]">
                     <div class="relative w-full flex-1"><canvas id="trendChartFull"></canvas></div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="kpi-card p-4 lg:p-5 flex justify-between items-center border-l-4 border-l-rose-500">
+                <div class="flex flex-wrap gap-3 p-2">
+
+                    <div
+                        class="bg-[#1e2230] border border-slate-700/50 p-5 rounded-xl min-w-[320px] flex-1 max-w-[380px] flex items-center justify-between shadow-lg">
                         <div>
-                            <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Daily Energy
-                                Breaches</h4>
-                            <p class="text-[10px] text-slate-400 mt-1">Instances below 99%</p>
+                            <h3 class="text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-1">Daily
+                                Energy
+                            </h3>
+                            <p class="text-[10px] font-medium text-slate-500 uppercase">Monthly Penalty</p>
                         </div>
-                        <p class="text-3xl font-black text-rose-500" id="val-breach-daily">0</p>
+                        <div class="text-right">
+                            <span class="text-[9px] text-slate-500 font-bold tracking-wider block mb-0.5">DAILY</span>
+                            <div id="pen-daily" class="text-[#ff4057] text-2xl font-black leading-none">0.0</div>
+                        </div>
                     </div>
-                    <div class="kpi-card p-4 lg:p-5 flex justify-between items-center border-l-4 border-l-rose-500">
+
+                    <div
+                        class="bg-[#1e2230] border border-slate-700/50 p-5 rounded-xl min-w-[340px] flex-1 max-w-[400px] flex items-center justify-between shadow-lg">
                         <div>
-                            <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Load 12h Breaches
-                            </h4>
-                            <p class="text-[10px] text-slate-400 mt-1">Instances below 99%</p>
+                            <h3 class="text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-1">Load
+                                Survey
+                            </h3>
+                            <p class="text-[10px] font-medium text-slate-500 uppercase">Monthly Penalty</p>
                         </div>
-                        <p class="text-3xl font-black text-rose-500" id="val-breach-load">0</p>
+                        <div class="flex items-center gap-4">
+                            <div class="text-right">
+                                <span class="text-[9px] text-slate-500 font-bold tracking-wider block mb-0.5">8H</span>
+                                <div id="pen-load-8" class="text-[#ff4057] text-2xl font-black leading-none">0.0
+                                </div>
+                            </div>
+                            <div class="w-px h-8 bg-slate-700/50"></div>
+                            <div class="text-right">
+                                <span class="text-[9px] text-slate-500 font-bold tracking-wider block mb-0.5">12H</span>
+                                <div id="pen-load-12" class="text-[#ff4057] text-2xl font-black leading-none">0.0
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="kpi-card p-4 lg:p-5 flex justify-between items-center border-l-4 border-l-rose-500">
+
+                    <div
+                        class="bg-[#1e2230] border border-slate-700/50 p-5 rounded-xl min-w-[340px] flex-1 max-w-[400px] flex items-center justify-between shadow-lg">
                         <div>
-                            <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Bill 168h Breaches
-                            </h4>
-                            <p class="text-[10px] text-slate-400 mt-1">Instances below 99%</p>
+                            <h3 class="text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-1">Bill
+                                Profile
+                            </h3>
+                            <p class="text-[10px] font-medium text-slate-500 uppercase">Monthly Penalty</p>
                         </div>
-                        <p class="text-3xl font-black text-rose-500" id="val-breach-bill">0</p>
+                        <div class="flex items-center gap-4">
+                            <div class="text-right">
+                                <span class="text-[9px] text-slate-500 font-bold tracking-wider block mb-0.5">72H</span>
+                                <div id="pen-bill-72" class="text-[#ff4057] text-2xl font-black leading-none">0.0
+                                </div>
+                            </div>
+                            <div class="w-px h-8 bg-slate-700/50"></div>
+                            <div class="text-right">
+                                <span
+                                    class="text-[9px] text-slate-500 font-bold tracking-wider block mb-0.5">168H</span>
+                                <div id="pen-bill-168" class="text-[#ff4057] text-2xl font-black leading-none">0.0
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
                 </div>
             </div>
 
             <div class="mb-8">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-[13px] font-bold text-slate-800 dark:text-white uppercase tracking-widest">Detailed
+                    <h2 class="text-[13px] font-bold text-slate-800 dark:text-white uppercase tracking-widest">
+                        Detailed
                         SAT-Wise Operational Data <span class="text-emerald-500" id="table-month-title"></span></h2>
                 </div>
 
@@ -352,21 +439,28 @@
                             <thead
                                 class="bg-slate-100 dark:bg-[#111620] border-b border-slate-200 dark:border-dashBorder text-[11px] uppercase font-bold text-slate-500 dark:text-slate-400">
                                 <tr>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">SAT Name ↕
+                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">SAT Name
+                                        ↕
                                     </th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Total Meters
+                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Total
+                                        Meters
                                     </th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Daily Energy
+                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Daily
+                                        Energy
                                         %</th>
                                     <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Load 8H %
                                     </th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Load 12H %
+                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Load 12H
+                                        %
                                     </th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Bill 72H %
+                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Bill 72H
+                                        %
                                     </th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Bill 168H %
+                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Bill 168H
+                                        %
                                     </th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Status</th>
+                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Status
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody id="sat-table-body"
@@ -395,7 +489,7 @@
 
     <script src="js/main.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             // 1. Session Storage se login data nikalo
             const storedData = sessionStorage.getItem("user_rights");
 
@@ -420,7 +514,7 @@
                     nameElement.innerText = formattedName;
                     nameElement.classList.remove("italic"); // Loading wala italic style hata do
                 }
-                
+
                 if (roleElement) {
                     roleElement.innerText = displayRole;
                 }
@@ -428,6 +522,7 @@
         });
     </script>
 </body>
+
 </html>
 </body>
 

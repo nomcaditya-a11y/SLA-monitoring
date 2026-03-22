@@ -349,6 +349,7 @@ function renderValue(valId, diffId, value, target, isOverall = false) {
 }
 
 // TREND CHART (Now uses Load 12H instead of 24H)
+
 // --- SURGICAL FIX: FORCED MONTH SYNC TREND CHART ---
 function updateTrendChart(cBill, cLoad, cDaily, selMonthStr) {
     let tMonth = new Date().getMonth();
@@ -561,9 +562,28 @@ function applyFiltersAndRender() {
         let totMetersEl = document.getElementById('val-total-meters');
         if(totMetersEl) totMetersEl.innerText = totMeters > 0 ? totMeters.toLocaleString('en-IN') : "0";
 
+        
         let aD24 = countD24 ? sumD24/countD24 : NaN; 
         let aL12 = countL12 ? sumL12/countL12 : NaN; let aL8  = countL8 ? sumL8/countL8 : NaN;
         let aB168 = countB168 ? sumB168/countB168 : NaN; let aB72  = countB72 ? sumB72/countB72 : NaN;
+        // 🟢 BIFURCATION CALCULATION (Comm vs Non-Comm)
+        // Load 12H SLA ko base maan kar counts nikal rahe hain
+        let commCount = 0;
+        let nonCommCount = 0;
+
+        if (totMeters > 0 && !isNaN(aL12)) {
+            // Comm Meters = Total Meters * (Load 12H Average / 100)
+            commCount = Math.round((totMeters * aL12) / 100);
+            // Non-Comm = Total - Comm
+            nonCommCount = totMeters - commCount;
+        }
+
+        // UI par values update karna
+        let commEl = document.getElementById('val-comm-meters');
+        if (commEl) commEl.innerText = commCount > 0 ? commCount.toLocaleString('en-IN') : "0";
+
+        let nonCommEl = document.getElementById('val-noncomm-meters');
+        if (nonCommEl) nonCommEl.innerText = nonCommCount > 0 ? nonCommCount.toLocaleString('en-IN') : "0";
         
         let validComps = 0, sumComps = 0;
         if(!isNaN(aB72)) { sumComps += aB72; validComps++; }
@@ -591,6 +611,15 @@ function applyFiltersAndRender() {
         let bD = document.getElementById('val-breach-daily'); if(bD) bD.innerText = tableDataObj.filter(r => !isNaN(r.daily) && r.daily < 99.0).length;
         let bL = document.getElementById('val-breach-load'); if(bL) bL.innerText = tableDataObj.filter(r => !isNaN(r.load12) && r.load12 < 99.0).length;
         let bB = document.getElementById('val-breach-bill'); if(bB) bB.innerText = tableDataObj.filter(r => !isNaN(r.bill168) && r.bill168 < 99.0).length;
+// 🟢 LIVE PENALTY UPDATE (Filters apply hone par ye chalega)
+        // Agar data nahi hai (NaN), toh default penalty 0 ho jayegi
+        updatePenalty('pen-daily', 99.0, isNaN(aD24) ? 99.0 : aD24);
+        
+        updatePenalty('pen-load-8', 98.0, isNaN(aL8) ? 98.0 : aL8);
+        updatePenalty('pen-load-12', 99.0, isNaN(aL12) ? 99.0 : aL12);
+        
+        updatePenalty('pen-bill-72', 98.0, isNaN(aB72) ? 98.0 : aB72);
+        updatePenalty('pen-bill-168', 99.0, isNaN(aB168) ? 99.0 : aB168);
 
         // 👇 YAHAN FIX HUA HAI: selMonth ab explicitly pass ho raha hai
         updateTrendChart([...filterSheetData(db.PKG1_BILL, "PKG1", false, true), ...filterSheetData(db.PKG3_BILL, "PKG3", false, true)], 
@@ -613,3 +642,12 @@ if(syncBtn) syncBtn.addEventListener('click', syncDashboardData);
 let applyBtn = document.getElementById('apply-btn');
 if(applyBtn) applyBtn.addEventListener('click', applyFiltersAndRender);
 
+// 🟢 The Master Formula Function
+// EKDUM LAST MEIN YE FUNCTION HONA CHAHIYE
+function updatePenalty(elementId, target, achieve) {
+    let penalty = Math.max(0, (target - achieve) / 10);
+    const element = document.getElementById(elementId);
+    if(element) {
+        element.innerText = penalty.toFixed(2);
+    }
+}
