@@ -167,9 +167,9 @@ let trendChartFull = new Chart(document.getElementById('trendChartFull').getCont
     data: { 
         labels: ['No Data'], 
         datasets: [
-            { label: 'Billing (Aqua)', data: [0], borderColor: '#06b6d4', backgroundColor: 'transparent', borderWidth: 2, tension: 0.4, pointRadius: 3, spanGaps: true },
-            { label: 'Load Survey (Orange)', data: [0], borderColor: '#f97316', backgroundColor: 'transparent', borderWidth: 2, tension: 0.4, pointRadius: 3, spanGaps: true },
-            { label: 'Daily Energy (Green)', data: [0], borderColor: '#10b981', backgroundColor: 'transparent', borderWidth: 2, tension: 0.4, pointRadius: 3, spanGaps: true },
+            { label: 'Billing ', data: [0], borderColor: '#06b6d4', backgroundColor: 'transparent', borderWidth: 2, tension: 0.4, pointRadius: 3, spanGaps: true },
+            { label: 'Load Survey ', data: [0], borderColor: '#f97316', backgroundColor: 'transparent', borderWidth: 2, tension: 0.4, pointRadius: 3, spanGaps: true },
+            { label: 'Daily Energy ', data: [0], borderColor: '#10b981', backgroundColor: 'transparent', borderWidth: 2, tension: 0.4, pointRadius: 3, spanGaps: true },
             { label: 'Target 99%', data: [], borderColor: '#ef4444', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false }
         ]
     },
