@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* Dropdown fix for dark mode */
+.dark select option { background-color: #161b26; color: #e2e8f0; padding: 12px; }
+select option { background-color: #ffffff; color: #1e293b; padding: 12px; }
+
+body { overscroll-behavior-y: none; }
+
+/* Loader Spinner */
+.spinner { 
+    border: 3px solid rgba(16, 185, 129, 0.1); 
+    border-top: 3px solid #10b981; 
+    border-radius: 50%; 
+    width: 45px; height: 45px; 
+    animation: spin 1s linear infinite; 
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Clean Minimalist Cards */
+.kpi-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.dark .kpi-card {
+    background-color: #1a1f2c;
+    border: 1px solid #232a38;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+.dark .kpi-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+}
+
+/* Table Row Hover Highlight */
+tbody tr { transition: background-color 0.2s ease; }
+tbody tr:hover { background-color: rgba(16, 185, 129, 0.05); }
