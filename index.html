@@ -1,76 +1,85 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
+
 <head>
     <script>
-    // Check if user is logged in
-    const authStatus = sessionStorage.getItem("genus_auth");
-    const userRights = JSON.parse(sessionStorage.getItem("user_rights") || "{}");
+        // Check if user is logged in
+        const authStatus = sessionStorage.getItem("genus_auth");
+        const userRights = JSON.parse(sessionStorage.getItem("user_rights") || "{}");
 
-    if (authStatus !== "true") {
-        // Agar login nahi hai, toh 1 level bahar (Main Login) pe phenk do
-        window.location.href = "login.html"; 
-    } else {
-        // Agar login hai, toh check karo ki uske paas "SLA" ka access hai ya nahi
-        // (Admins ko automatically allowed hai)
-        const hasSLA = userRights.role === "admin" || (userRights.dashboards && userRights.dashboards.includes("SLA"));
-        
-        if (!hasSLA) {
-            alert("Access Denied: You don't have rights for SLA Dashboard.");
-            window.location.href = "../portal.html";
-        }
-    }
-</script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOMC SLA Dashboard</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: { 
-                extend: { 
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        dashBg: '#0f131c',    
-                        dashSide: '#161b26',  
-                        dashBorder: '#232a38' 
-                    }
-                } 
+        if (authStatus !== "true") {
+            // Agar login nahi hai, toh 1 level bahar (Main Login) pe phenk do
+            window.location.href = "login.html";
+        } else {
+            // Agar login hai, toh check karo ki uske paas "SLA" ka access hai ya nahi
+            // (Admins ko automatically allowed hai)
+            const hasSLA = userRights.role === "admin" || (userRights.dashboards && userRights.dashboards.includes("SLA"));
+
+            if (!hasSLA) {
+                alert("Access Denied: You don't have rights for SLA Dashboard.");
+                window.location.href = "../portal.html";
             }
         }
     </script>
-    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOMC SLA Dashboard</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        dashBg: '#0f131c',
+                        dashSide: '#161b26',
+                        dashBorder: '#232a38'
+                    }
+                }
+            }
+        }
+    </script>
+
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="bg-slate-50 dark:bg-dashBg text-slate-800 dark:text-slate-200 font-sans h-screen flex overflow-hidden transition-colors duration-300 selection:bg-emerald-500/30">
 
-    <aside id="sidebar" class="fixed md:relative inset-y-0 left-0 w-[260px] bg-white dark:bg-dashSide border-r border-slate-200 dark:border-dashBorder flex flex-col z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 shadow-2xl md:shadow-none">
-        
-        <div class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-dashBorder shrink-0">
-            <div class="flex items-center">
-                <svg class="w-6 h-6 text-emerald-500 mr-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19.452 4.148A1.996 1.996 0 0 0 18 3.5h-1a1.99 1.99 0 0 0-1.42.59l-2.07 2.07c-3.13-.53-6.49.52-8.62 3.19l-.38.48 4.24 4.24.48-.38c2.67-2.13 3.72-5.49 3.19-8.62l2.07-2.07A2 2 0 0 0 19.452 4.148zM5 14.5c-1.4 1.4-1.5 3.5-.5 5 .5.7 1.2 1 1.9 1 .5 0 1-.2 1.4-.6l3.5-3.5-4.2-4.2-2.1 2.3zm12-9c.3 0 .5.1.7.3.2.2.3.4.3.7s-.1.5-.3.7l-2.3 2.1-1.4-1.4 2.1-2.3c.2-.2.6-.1.9-.1z"/>
-                </svg>
-                <span class="font-bold text-slate-800 dark:text-white tracking-wide text-[15px]">NOMC Portal</span>
-            </div>
-            <button id="close-sidebar" class="text-slate-400 hover:text-emerald-500 transition md:hidden">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-        </div>
-        
+<body
+    class="bg-slate-50 dark:bg-dashBg text-slate-800 dark:text-slate-200 font-sans h-screen flex overflow-hidden transition-colors duration-300 selection:bg-emerald-500/30">
+
+    <aside id="sidebar"
+        class="fixed md:relative inset-y-0 left-0 w-[260px] bg-white dark:bg-dashSide border-r border-slate-200 dark:border-dashBorder flex flex-col z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 shadow-2xl md:shadow-none">
+
+       <div class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-dashBorder shrink-0">
+   <div class="flex items-center shrink-0">
+    <img style="background-color: whitesmoke; padding: 3px; border-radius: 5px;" src="/RCDC/js/logo.webp" alt="Genus Logo" class="h-10 sm:h-12 w-auto object-contain shrink-0">
+</div>
+    
+    <button id="close-sidebar" class="text-slate-400 hover:text-emerald-500 transition md:hidden">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+    </button>
+</div>
+
         <div class="p-6 flex-1 overflow-y-auto">
-            <h3 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">Filters</h3>
-            
+            <h3 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">Filters
+            </h3>
+
             <div class="mb-6">
-                <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">Select Package</label>
-                <div class="flex bg-slate-100 dark:bg-[#0d111a] p-1 rounded-lg border border-slate-200 dark:border-dashBorder relative">
-                    <button id="btn-pkg1" class="flex-1 py-1.5 text-[12px] font-bold rounded-md bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm transition-all z-10">
+                <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">Select
+                    Package</label>
+                <div
+                    class="flex bg-slate-100 dark:bg-[#0d111a] p-1 rounded-lg border border-slate-200 dark:border-dashBorder relative">
+                    <button id="btn-pkg1"
+                        class="flex-1 py-1.5 text-[12px] font-bold rounded-md bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm transition-all z-10">
                         PKG 1
                     </button>
-                    <button id="btn-pkg3" class="flex-1 py-1.5 text-[12px] font-bold rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all z-10">
+                    <button id="btn-pkg3"
+                        class="flex-1 py-1.5 text-[12px] font-bold rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all z-10">
                         PKG 3
                     </button>
                 </div>
@@ -78,86 +87,130 @@
             </div>
 
             <div class="mb-5">
-                <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">SAT Name</label>
-                <select id="filter-sat" class="w-full bg-slate-50 dark:bg-[#0d111a] border border-slate-300 dark:border-dashBorder text-slate-700 dark:text-slate-200 text-[13px] rounded-md focus:ring-1 focus:ring-emerald-500 outline-none px-3 py-2 cursor-pointer transition-colors">
+                <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">SAT
+                    Name</label>
+                <select id="filter-sat"
+                    class="w-full bg-slate-50 dark:bg-[#0d111a] border border-slate-300 dark:border-dashBorder text-slate-700 dark:text-slate-200 text-[13px] rounded-md focus:ring-1 focus:ring-emerald-500 outline-none px-3 py-2 cursor-pointer transition-colors">
                     <option value="ALL">All SATs</option>
                 </select>
             </div>
 
             <div class="mb-7">
-                <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Time Period (Month)</label>
-                <select id="filter-time" class="w-full bg-slate-50 dark:bg-[#0d111a] border border-slate-300 dark:border-dashBorder text-slate-700 dark:text-slate-200 text-[13px] rounded-md focus:ring-1 focus:ring-emerald-500 outline-none px-3 py-2 cursor-pointer transition-colors">
+                <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Time Period
+                    (Month)</label>
+                <select id="filter-time"
+                    class="w-full bg-slate-50 dark:bg-[#0d111a] border border-slate-300 dark:border-dashBorder text-slate-700 dark:text-slate-200 text-[13px] rounded-md focus:ring-1 focus:ring-emerald-500 outline-none px-3 py-2 cursor-pointer transition-colors">
                 </select>
             </div>
 
-            <button id="apply-btn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-md shadow-lg shadow-emerald-500/20 dark:shadow-emerald-900/20 transition-all duration-200 text-[13px] flex justify-center items-center">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+            <button id="apply-btn"
+                class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-md shadow-lg shadow-emerald-500/20 dark:shadow-emerald-900/20 transition-all duration-200 text-[13px] flex justify-center items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z">
+                    </path>
+                </svg>
                 Apply Filters
             </button>
-            
+
             <div class="pt-6 mt-6 border-t border-slate-200 dark:border-dashBorder">
-                <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Last Synced</p>
-                <p class="text-[13px] font-bold text-emerald-600 dark:text-emerald-400 mt-1" id="update-time">LIVE: --:--</p>
+                <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Last Synced
+                </p>
+                <p class="text-[13px] font-bold text-emerald-600 dark:text-emerald-400 mt-1" id="update-time">LIVE:
+                    --:--</p>
             </div>
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col h-screen overflow-y-auto overflow-x-hidden relative transition-all duration-300">
-        
-        <div id="data-loader" class="absolute inset-0 bg-white/80 dark:bg-dashBg/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden">
+
+        <div id="data-loader"
+            class="absolute inset-0 bg-white/80 dark:bg-dashBg/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden">
             <div class="spinner mb-4"></div>
-            <p class="text-emerald-600 dark:text-emerald-400 font-bold text-sm tracking-widest uppercase" id="loader-text">Crunching Data...</p>
+            <p class="text-emerald-600 dark:text-emerald-400 font-bold text-sm tracking-widest uppercase"
+                id="loader-text">Crunching Data...</p>
         </div>
 
-       <header class="h-16 bg-white/90 dark:bg-dashBg/90 backdrop-blur-md border-b border-slate-200 dark:border-dashBorder flex items-center justify-between px-4 md:px-6 shrink-0 z-10 sticky top-0">
+        <header
+            class="h-16 bg-white/90 dark:bg-dashBg/90 backdrop-blur-md border-b border-slate-200 dark:border-dashBorder flex items-center justify-between px-4 md:px-6 shrink-0 z-10 sticky top-0">
             <div class="flex items-center flex-1">
-                <button id="toggle-sidebar" class="mr-3 text-slate-500 dark:text-slate-400 hover:text-emerald-500 transition p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                <button id="toggle-sidebar"
+                    class="mr-3 text-slate-500 dark:text-slate-400 hover:text-emerald-500 transition p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
                 </button>
                 <h1 class="text-[16px] md:text-[18px] font-bold text-slate-800 dark:text-white tracking-wide truncate">
-                    Operations Dashboard - <span id="main-title-pkg" class="text-emerald-500">ALL</span>
+                    SLA Monitoring Dashboard - <span id="main-title-pkg" class="text-emerald-500">ALL</span>
                 </h1>
             </div>
-            
+
             <div class="flex items-center space-x-2 md:space-x-4">
-                <button id="refresh-btn" class="hidden sm:flex bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all items-center">
-                    <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                <button id="refresh-btn"
+                    class="hidden sm:flex bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all items-center">
+                    <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                    </svg>
                     Sync
                 </button>
 
-                <button id="theme-toggle" type="button" class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md text-sm p-1.5 transition">
-                    <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-                    <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4.22 2.28a1 1 0 011.415 0l.708.707a1 1 0 01-1.414 1.414l-.708-.707a1 1 0 010-1.414zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM15.657 15.657a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 0zM10 18a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1zm-4.22-2.28a1 1 0 01-1.415 0l-.708-.707a1 1 0 011.414-1.414l.708.707a1 1 0 010 1.414zM2 10a1 1 0 011-1h1a1 1 0 110 2H3a1 1 0 01-1-1zm2.28-4.22a1 1 0 010-1.415l.707-.708a1 1 0 011.414 1.414l-.707.708a1 1 0 01-1.414 0zM10 5a5 5 0 100 10 5 5 0 000-10z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+                <button id="theme-toggle" type="button"
+                    class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md text-sm p-1.5 transition">
+                    <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                    </svg>
+                    <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                            d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4.22 2.28a1 1 0 011.415 0l.708.707a1 1 0 01-1.414 1.414l-.708-.707a1 1 0 010-1.414zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM15.657 15.657a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 0zM10 18a1 1 0 01-1-1v-1a1 1 0 112 0v1a1 1 0 01-1 1zm-4.22-2.28a1 1 0 01-1.415 0l-.708-.707a1 1 0 011.414-1.414l.708.707a1 1 0 010 1.414zM2 10a1 1 0 011-1h1a1 1 0 110 2H3a1 1 0 01-1-1zm2.28-4.22a1 1 0 010-1.415l.707-.708a1 1 0 011.414 1.414l-.707.708a1 1 0 01-1.414 0zM10 5a5 5 0 100 10 5 5 0 000-10z"
+                            fill-rule="evenodd" clip-rule="evenodd"></path>
+                    </svg>
                 </button>
 
                 <div class="h-5 w-px bg-slate-300 dark:bg-slate-700 hidden sm:block"></div>
 
                 <div class="relative">
-                    <div id="profile-btn" class="flex items-center cursor-pointer hover:opacity-80 transition group pl-1">
-                        <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-white dark:ring-dashBg">
+                    <div id="profile-btn"
+                        class="flex items-center cursor-pointer hover:opacity-80 transition group pl-1">
+                        <div
+                            class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-white dark:ring-dashBg">
                             AR
                         </div>
                         <div class="hidden md:block ml-2.5 text-left">
-                            <p class="text-[12px] font-bold text-slate-700 dark:text-slate-100 leading-none">Aditya Raut</p>
-                            <p class="text-[9px] font-medium text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">NOMC Engineer</p>
+                            <p id="userName"
+                                class="text-[12px] font-bold text-slate-700 dark:text-slate-100 leading-none italic">
+                                Loading...</p>
+                            <p id="userRole"
+                                class="text-[9px] font-medium text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">
+                                NOMC Engineer</p>
                         </div>
-                        <svg class="hidden md:block w-3.5 h-3.5 text-slate-400 ml-2 group-hover:text-emerald-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        <svg class="hidden md:block w-3.5 h-3.5 text-slate-400 ml-2 group-hover:text-emerald-500 transition-colors"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
                     </div>
 
-                    <div id="profile-menu" class="hidden absolute right-0 mt-3 w-40 bg-white dark:bg-[#1a1f2c] border border-slate-200 dark:border-dashBorder rounded-lg shadow-lg py-1 z-50">
-                        <a href="#" class="block px-4 py-2 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">⚙️ Settings</a>
+                    <div id="profile-menu"
+                        class="hidden absolute right-0 mt-3 w-40 bg-white dark:bg-[#1a1f2c] border border-slate-200 dark:border-dashBorder rounded-lg shadow-lg py-1 z-50">
+                        <a href="#"
+                            class="block px-4 py-2 text-[11px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">⚙️
+                            Settings</a>
                         <div class="border-t border-slate-200 dark:border-dashBorder my-1"></div>
-                        <a href="#" class="block px-4 py-2 text-[11px] font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition">🚪 Logout</a>
+                        <a href="#"
+                            class="block px-4 py-2 text-[11px] font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition">🚪
+                            Logout</a>
                     </div>
                 </div>
 
             </div>
         </header>
 
-       <div class="p-4 lg:p-6">
-            
+        <div class="p-4 lg:p-6">
+
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 items-stretch">
-                
+
                 <div class="kpi-card flex flex-col items-center justify-center text-center p-4 h-full">
                     <h3 class="text-[13px] font-bold text-slate-700 dark:text-slate-200">Total Meters Tracked</h3>
                     <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-2">Active Devices</p>
@@ -179,7 +232,8 @@
                 </div>
 
                 <div class="kpi-card flex flex-col p-4 text-center h-full">
-                    <h3 class="text-[13px] font-bold text-slate-700 dark:text-slate-200" id="title-bill">Billing SLA</h3>
+                    <h3 class="text-[13px] font-bold text-slate-700 dark:text-slate-200" id="title-bill">Billing SLA
+                    </h3>
                     <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">From Dropdown</p>
                     <div class="flex w-full items-center justify-center mt-auto">
                         <div class="w-1/2 border-r border-slate-300 dark:border-slate-700 px-2">
@@ -213,27 +267,34 @@
                 </div>
 
                 <div class="kpi-card flex flex-col p-4 h-full border-t-4 border-t-rose-500">
-                    <h3 class="text-[13px] font-bold text-slate-700 dark:text-slate-200 text-center">Exclusions (Failed)</h3>
+                    <h3 class="text-[13px] font-bold text-slate-700 dark:text-slate-200 text-center">Exclusions (Failed)
+                    </h3>
                     <p class="text-[10px] text-slate-500 dark:text-slate-400 mb-2 text-center">Non-Compliant Meters</p>
                     <div class="flex flex-col justify-between flex-1 mt-1 space-y-1.5">
-                        <div class="bg-rose-50 dark:bg-rose-500/10 rounded px-2 py-1.5 flex justify-between items-center border border-rose-100 dark:border-rose-500/20">
+                        <div
+                            class="bg-rose-50 dark:bg-rose-500/10 rounded px-2 py-1.5 flex justify-between items-center border border-rose-100 dark:border-rose-500/20">
                             <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300">Daily Energy</span>
                             <div class="text-right">
-                                <span class="text-[12px] font-bold text-rose-600 dark:text-rose-400" id="excl-count-daily">0</span>
+                                <span class="text-[12px] font-bold text-rose-600 dark:text-rose-400"
+                                    id="excl-count-daily">0</span>
                                 <span class="text-[9px] font-bold text-rose-500 ml-0.5" id="excl-perc-daily">(0%)</span>
                             </div>
                         </div>
-                        <div class="bg-amber-50 dark:bg-amber-500/10 rounded px-2 py-1.5 flex justify-between items-center border border-amber-100 dark:border-amber-500/20">
+                        <div
+                            class="bg-amber-50 dark:bg-amber-500/10 rounded px-2 py-1.5 flex justify-between items-center border border-amber-100 dark:border-amber-500/20">
                             <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300">Load 12Hrs</span>
                             <div class="text-right">
-                                <span class="text-[12px] font-bold text-amber-600 dark:text-amber-400" id="excl-count-load">0</span>
+                                <span class="text-[12px] font-bold text-amber-600 dark:text-amber-400"
+                                    id="excl-count-load">0</span>
                                 <span class="text-[9px] font-bold text-amber-500 ml-0.5" id="excl-perc-load">(0%)</span>
                             </div>
                         </div>
-                        <div class="bg-rose-50 dark:bg-rose-500/10 rounded px-2 py-1.5 flex justify-between items-center border border-rose-100 dark:border-rose-500/20">
+                        <div
+                            class="bg-rose-50 dark:bg-rose-500/10 rounded px-2 py-1.5 flex justify-between items-center border border-rose-100 dark:border-rose-500/20">
                             <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300">Bill 168Hrs</span>
                             <div class="text-right">
-                                <span class="text-[12px] font-bold text-rose-600 dark:text-rose-400" id="excl-count-bill">0</span>
+                                <span class="text-[12px] font-bold text-rose-600 dark:text-rose-400"
+                                    id="excl-count-bill">0</span>
                                 <span class="text-[9px] font-bold text-rose-500 ml-0.5" id="excl-perc-bill">(0%)</span>
                             </div>
                         </div>
@@ -243,9 +304,10 @@
 
             <div class="mb-8 mt-2">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-[13px] font-bold text-slate-800 dark:text-white uppercase tracking-widest">SLA Performance & Breach Analysis <span class="text-emerald-500" id="trend-month-title"></span></h2>
+                    <h2 class="text-[13px] font-bold text-slate-800 dark:text-white uppercase tracking-widest">SLA
+                        Performance & Breach Analysis <span class="text-emerald-500" id="trend-month-title"></span></h2>
                 </div>
-                
+
                 <div class="kpi-card p-4 md:p-6 mb-4 flex flex-col h-[380px]">
                     <div class="relative w-full flex-1"><canvas id="trendChartFull"></canvas></div>
                 </div>
@@ -253,21 +315,24 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="kpi-card p-4 lg:p-5 flex justify-between items-center border-l-4 border-l-rose-500">
                         <div>
-                            <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Daily Energy Breaches</h4>
+                            <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Daily Energy
+                                Breaches</h4>
                             <p class="text-[10px] text-slate-400 mt-1">Instances below 99%</p>
                         </div>
                         <p class="text-3xl font-black text-rose-500" id="val-breach-daily">0</p>
                     </div>
                     <div class="kpi-card p-4 lg:p-5 flex justify-between items-center border-l-4 border-l-rose-500">
                         <div>
-                            <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Load 12h Breaches</h4>
+                            <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Load 12h Breaches
+                            </h4>
                             <p class="text-[10px] text-slate-400 mt-1">Instances below 99%</p>
                         </div>
                         <p class="text-3xl font-black text-rose-500" id="val-breach-load">0</p>
                     </div>
                     <div class="kpi-card p-4 lg:p-5 flex justify-between items-center border-l-4 border-l-rose-500">
                         <div>
-                            <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Bill 168h Breaches</h4>
+                            <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Bill 168h Breaches
+                            </h4>
                             <p class="text-[10px] text-slate-400 mt-1">Instances below 99%</p>
                         </div>
                         <p class="text-3xl font-black text-rose-500" id="val-breach-bill">0</p>
@@ -277,34 +342,50 @@
 
             <div class="mb-8">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-[13px] font-bold text-slate-800 dark:text-white uppercase tracking-widest">Detailed SAT-Wise Operational Data <span class="text-emerald-500" id="table-month-title"></span></h2>
+                    <h2 class="text-[13px] font-bold text-slate-800 dark:text-white uppercase tracking-widest">Detailed
+                        SAT-Wise Operational Data <span class="text-emerald-500" id="table-month-title"></span></h2>
                 </div>
-                
+
                 <div class="kpi-card overflow-hidden flex flex-col">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead class="bg-slate-100 dark:bg-[#111620] border-b border-slate-200 dark:border-dashBorder text-[11px] uppercase font-bold text-slate-500 dark:text-slate-400">
+                            <thead
+                                class="bg-slate-100 dark:bg-[#111620] border-b border-slate-200 dark:border-dashBorder text-[11px] uppercase font-bold text-slate-500 dark:text-slate-400">
                                 <tr>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">SAT Name ↕</th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Total Meters</th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Daily Energy %</th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Load 8H %</th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Load 12H %</th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Bill 72H %</th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Bill 168H %</th>
+                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">SAT Name ↕
+                                    </th>
+                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Total Meters
+                                    </th>
+                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Daily Energy
+                                        %</th>
+                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Load 8H %
+                                    </th>
+                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Load 12H %
+                                    </th>
+                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Bill 72H %
+                                    </th>
+                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Bill 168H %
+                                    </th>
                                     <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Status</th>
                                 </tr>
                             </thead>
-                            <tbody id="sat-table-body" class="divide-y divide-slate-100 dark:divide-dashBorder text-slate-700 dark:text-slate-300 text-[12px] font-medium">
-                                </tbody>
+                            <tbody id="sat-table-body"
+                                class="divide-y divide-slate-100 dark:divide-dashBorder text-slate-700 dark:text-slate-300 text-[12px] font-medium">
+                            </tbody>
                         </table>
                     </div>
-                    
-                    <div class="bg-slate-50 dark:bg-[#161b26] px-6 py-4 border-t border-slate-200 dark:border-dashBorder flex items-center justify-between">
-                        <span class="text-[11px] font-semibold text-slate-500" id="table-info">Showing 0 to 0 of 0 SATs</span>
+
+                    <div
+                        class="bg-slate-50 dark:bg-[#161b26] px-6 py-4 border-t border-slate-200 dark:border-dashBorder flex items-center justify-between">
+                        <span class="text-[11px] font-semibold text-slate-500" id="table-info">Showing 0 to 0 of 0
+                            SATs</span>
                         <div class="flex space-x-2">
-                            <button class="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition" id="btn-prev">Previous</button>
-                            <button class="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition" id="btn-next">Next</button>
+                            <button
+                                class="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                                id="btn-prev">Previous</button>
+                            <button
+                                class="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                                id="btn-next">Next</button>
                         </div>
                     </div>
                 </div>
@@ -312,6 +393,42 @@
         </div>
     </main>
 
-  <script src="js/main.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // 1. Session Storage se login data nikalo
+            const storedData = sessionStorage.getItem("user_rights");
+
+            if (storedData) {
+                const userData = JSON.parse(storedData);
+
+                // 2. Email se naam nikalo (e.g., aditya.raut@... -> Aditya Raut)
+                let formattedName = "User";
+                if (userData.email) {
+                    const rawName = userData.email.split('@')[0].replace(/[\._]/g, ' ');
+                    formattedName = rawName.replace(/\b\w/g, l => l.toUpperCase());
+                }
+
+                // 3. Role set karo
+                const displayRole = userData.role === 'admin' ? 'Master Admin' : 'NOMC Engineer';
+
+                // 4. HTML mein values daalo
+                const nameElement = document.getElementById("userName");
+                const roleElement = document.getElementById("userRole");
+
+                if (nameElement) {
+                    nameElement.innerText = formattedName;
+                    nameElement.classList.remove("italic"); // Loading wala italic style hata do
+                }
+                
+                if (roleElement) {
+                    roleElement.innerText = displayRole;
+                }
+            }
+        });
+    </script>
 </body>
+</html>
+</body>
+
 </html>

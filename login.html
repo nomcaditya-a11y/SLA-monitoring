@@ -1,24 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        // Agar pehle se login hai, toh login page skip karo
+        if (sessionStorage.getItem("genus_auth") === "true") {
+            window.location.href = "portal.html";
+        }
+    </script>
     <meta charset="UTF-8">
     <title>Genus Power | Secure Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'media', // System default se light/dark automatically uthayega
+        }
+    </script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
-<body class="bg-slate-900 h-screen flex items-center justify-center">
+<body class="bg-slate-50 dark:bg-slate-900 h-screen flex items-center justify-center transition-colors duration-300">
 
-    <div class="bg-slate-800 p-8 rounded-xl shadow-2xl w-96 border border-slate-700">
-        <h2 class="text-2xl font-bold text-white mb-2 text-center">Genus Portal</h2>
-        <p class="text-slate-400 text-sm text-center mb-6">Login to access authorized dashboards</p>
+    <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-xl dark:shadow-2xl w-96 border border-slate-200 dark:border-slate-700 transition-colors duration-300">
         
-        <input type="email" id="emailInput" placeholder="Email Address" class="w-full p-3 rounded bg-slate-700 text-white border border-slate-600 mb-4 focus:border-emerald-500 outline-none">
-        <input type="password" id="passInput" placeholder="Password" class="w-full p-3 rounded bg-slate-700 text-white border border-slate-600 mb-4 focus:border-emerald-500 outline-none">
+        <div class="flex justify-center mb-6">
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center shrink-0">
+                <img src="/RCDC/js/logo.webp" alt="Genus Logo" class="h-12 w-auto object-contain">
+            </div> 
+        </div>
+
+        <p class="text-slate-500 dark:text-slate-400 text-sm text-center mb-6">Login to access authorized dashboards</p>
+        
+        <input type="email" id="emailInput" placeholder="Email Address" 
+               class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-600 mb-4 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-colors">
+        
+        <input type="password" id="passInput" placeholder="Password" 
+               class="w-full p-3 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-600 mb-4 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-colors">
         
         <p id="errorMsg" class="text-rose-500 text-xs font-bold mb-4 hidden"></p>
-        <button onclick="checkLogin()" id="loginBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded transition-all">Secure Login</button>
+        
+        <button onclick="checkLogin()" id="loginBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg transition-all shadow-md hover:shadow-lg">
+            Secure Login
+        </button>
     </div>
 
     <script>
@@ -34,7 +57,7 @@
         
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.database(); // Changed to RTDB
+        const db = firebase.database();
 
         async function checkLogin() {
             const email = document.getElementById('emailInput').value.trim();
@@ -50,7 +73,6 @@
                 const userCredential = await auth.signInWithEmailAndPassword(email, pass);
                 const user = userCredential.user;
 
-                // Safe Email (Replace dots with underscore for RTDB)
                 const safeEmail = user.email.replace(/\./g, '_');
                 const snapshot = await db.ref('users/' + safeEmail).once('value');
                 

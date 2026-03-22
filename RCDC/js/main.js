@@ -19,7 +19,42 @@ let currentMapComm = "NonComm";
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
-  
+   // ==========================================
+   
+    // Check Dark Mode
+    if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        const themeBtn = document.getElementById('theme-btn');
+        if(themeBtn) themeBtn.innerText = '☀️';
+    }
+
+const data = await fetchMeterData('pkg3');
+    if (data && data.length > 0) {
+        rawData = data;
+        filteredData = [...rawData]; 
+        document.getElementById('connection-status').innerHTML = `🟢 Live: ${rawData.length} records`;
+        
+        populateGlobalFiltersInitial();
+        applyGlobalFilters(); 
+
+        document.getElementById('filter-region').addEventListener('change', syncDependentFilters);
+        document.getElementById('filter-circle').addEventListener('change', syncDependentFilters);
+        document.getElementById('filter-division').addEventListener('change', syncDependentFilters);
+
+        document.getElementById('apply-filters').addEventListener('click', applyGlobalFilters);
+        document.getElementById('reset-filters').addEventListener('click', resetGlobalFilters);
+        
+        document.getElementById('map-zone-filter').addEventListener('change', e => { currentMapZone = e.target.value; updateMapFilters(); updateMapMarkers(); });
+        document.getElementById('map-aging-filter').addEventListener('change', e => { currentMapAging = e.target.value; updateMapFilters(); updateMapMarkers(); });
+        document.getElementById('map-comm-filter').addEventListener('change', e => { currentMapComm = e.target.value; updateMapFilters(); updateMapMarkers(); });
+    } else {
+        document.getElementById('connection-status').innerHTML = `🔴 Error connecting to database`;
+        document.getElementById('connection-status').style.color = "#ef4444";
+    }
+
+    setInterval(refreshData, 300000); // Auto-refresh data every 5 minutes
+});
+
 // --- HELPER FUNCTIONS ---
 function safeGet(row, colName) {
     const key = Object.keys(row).find(k => k.trim().toLowerCase() === colName.toLowerCase());
@@ -1032,5 +1067,4 @@ async function exportBoxData(type, format) {
         doc.save(`RCDC_${type}_RawData_${new Date().toISOString().slice(0,10)}.pdf`);
     }
 }
-
 

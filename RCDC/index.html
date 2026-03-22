@@ -44,13 +44,12 @@
         
         <div class="header-controls">
             <div class="pkg-switcher">
-                <button id="btn-pkg1" class="pkg-btn" onclick="switchPackage('pkg1')">PKG-1</button>
-                <button id="btn-pkg3" class="pkg-btn active" onclick="switchPackage('pkg3')">PKG-3</button>
-            </div>
+    <button id="btn-pkg1" class="pkg-btn" style="display: none;" onclick="switchPackage('pkg1')">PKG-1</button>
+    <button id="btn-pkg3" class="pkg-btn active" style="display: none;" onclick="switchPackage('pkg3')">PKG-3</button>
+</div>
             <button onclick="refreshData()" class="btn-secondary refresh-btn" title="Refresh Data">🔄 Refresh</button>
             <button id="theme-btn" onclick="toggleTheme()" class="btn-secondary refresh-btn" title="Toggle Dark Mode">🌙</button>
             
-            <button onclick="logoutUser()" class="btn-secondary refresh-btn" title="Lock Dashboard" style="color: var(--danger); font-weight: bold;">🔒</button>
             
             <button id="export-dash-btn" onclick="exportFullDashboardPDF()" class="btn-primary" style="height: 38px; padding: 0 15px; display: flex; align-items: center; gap: 5px;">
                 📄PDF
@@ -304,6 +303,64 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="js/api.js"></script>
     <script src="js/main.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const storedData = sessionStorage.getItem("user_rights");
+
+            if (storedData) {
+                const userData = JSON.parse(storedData);
+                const isAdmin = userData.role === 'admin';
+                const userPackages = userData.packages || [];
+
+                // ---------------------------------------------------------
+                // 🟢 PART A: NAME & ROLE DISPLAY LOGIC
+                // ---------------------------------------------------------
+                let formattedName = "User";
+                if (userData.email) {
+                    const rawName = userData.email.split('@')[0].replace(/[\._]/g, ' ');
+                    formattedName = rawName.replace(/\b\w/g, l => l.toUpperCase());
+                }
+                const displayRole = isAdmin ? 'Master Admin' : 'NOMC Engineer';
+
+                const nameElement = document.getElementById("userName");
+                const roleElement = document.getElementById("userRole");
+
+                if (nameElement) {
+                    nameElement.innerText = formattedName;
+                    nameElement.classList.remove("italic"); 
+                }
+                if (roleElement) roleElement.innerText = displayRole;
+
+
+                // ---------------------------------------------------------
+                // 🔴 PART B: PACKAGE RIGHTS & AUTO-SWITCH LOGIC
+                // ---------------------------------------------------------
+                const btnPkg1 = document.getElementById("btn-pkg1"); 
+                const btnPkg3 = document.getElementById("btn-pkg3");
+
+                // Check rights
+                const hasPkg1 = isAdmin || userPackages.includes("PKG1");
+                const hasPkg3 = isAdmin || userPackages.includes("PKG3");
+
+                // Agar right hai, toh button dikhao (display: inline-block ya block)
+                if (btnPkg1 && hasPkg1) btnPkg1.style.display = "inline-block";
+                if (btnPkg3 && hasPkg3) btnPkg3.style.display = "inline-block";
+
+                // 🔥 THE SMART AUTO-SWITCH:
+                // Agar user ke paas PKG3 nahi hai, lekin PKG1 hai, toh turant PKG1 khol do
+                if (!hasPkg3 && hasPkg1 && typeof switchPackage === "function") {
+                    
+                    // PKG3 se 'active' class hatao
+                    if(btnPkg3) btnPkg3.classList.remove("active");
+                    
+                    // PKG1 pe 'active' class lagao aur function chalao
+                    if(btnPkg1) btnPkg1.classList.add("active");
+                    switchPackage('pkg1'); 
+                }
+            }
+        });
+    </script>
+</body>
 </body>
 </html>
 
