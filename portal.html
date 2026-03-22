@@ -10,7 +10,7 @@
     <h1 class="text-3xl font-bold text-white mb-8" id="welcomeText">Select Dashboard</h1>
     
     <div class="flex gap-6" id="dashboardContainer">
-        <a href="dashboard.html" id="btn-sla" class="hidden block w-64 bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-emerald-500 hover:shadow-emerald-500/20 hover:shadow-lg transition-all text-center group">
+        <a href="index.html" id="btn-sla" class="hidden block w-64 bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-emerald-500 hover:shadow-emerald-500/20 hover:shadow-lg transition-all text-center group">
             <h2 class="text-xl font-bold text-emerald-500 mb-2">NOMC SLA</h2>
             <p class="text-xs text-slate-400">View SLA & Exclusions</p>
         </a>
@@ -40,13 +40,13 @@
 
         function logout() {
             sessionStorage.clear();
-            window.location.href = "index.html";
+            window.location.href = "login.html";
         }
         function logout() {
         // Sabse pehle session saaf karo
         sessionStorage.clear(); 
         // Phir user ko bahar phenk do
-        window.location.href = "index.html";
+        window.location.href = "login.html";
     }
     </script>
 </body>
