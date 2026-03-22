@@ -15,7 +15,7 @@
             <p class="text-xs text-slate-400">View SLA & Exclusions</p>
         </a>
 
-       <a href="https://genus-rcdc-cspdcl.vercel.app/?auth_token=GENUS_AUTHORIZED_ACCESS" 
+       <a href="RCDC/index.html" 
    id="btn-rcdc" 
    class="hidden block w-64 bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-blue-500 hover:shadow-blue-500/20 hover:shadow-lg transition-all text-center group">
     <h2 class="text-xl font-bold text-blue-500 mb-2">RCDC CSPDCL</h2>
@@ -49,5 +49,24 @@
         window.location.href = "login.html";
     }
     </script>
+    <script>
+    // 1. Storage se user ka data nikalo
+    const userData = JSON.parse(sessionStorage.getItem("user_rights") || "{}");
+
+    // 2. Agar data mil gaya, toh HTML mein naam badal do
+    if (userData && userData.email) {
+        // Email se naam nikalne ke liye (e.g. aditya.raut@gmail.com -> Aditya Raut)
+        // Agar tumne database mein 'name' field banayi hai toh seedha userData.name use karo
+        const rawName = userData.email.split('@')[0].replace(/\./g, ' '); 
+        
+        // Pehla letter Capital karne ke liye logic
+        const formattedName = rawName.replace(/\b\w/g, l => l.toUpperCase());
+
+        document.getElementById('userName').innerText = formattedName;
+        
+        // Agar role bhi dynamic dikhana hai (Admin/User)
+        document.getElementById('userRole').innerText = userData.role === 'admin' ? 'Master Admin' : 'NOMC Engineer';
+    }
+</script>
 </body>
 </html>
