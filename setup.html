@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2 style="font-family: sans-serif; padding: 20px;">Creating Master Admin... Please wait.</h2>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAoe-gmqaS5mX10mVmwMl7sGhvtDT2Vrnc",
+            authDomain: "nomc-8d3f0.firebaseapp.com",
+            databaseURL: "https://nomc-8d3f0-default-rtdb.firebaseio.com",
+            projectId: "nomc-8d3f0",
+            storageBucket: "nomc-8d3f0.firebasestorage.app",
+            messagingSenderId: "74946881929",
+            appId: "1:74946881929:web:ef983a77e70fa916639958"
+        };
+        firebase.initializeApp(firebaseConfig);
+        
+        // Tumhara admin email yahan hai (Replace with your actual auth email if different)
+        const adminEmail = "admin@genus.com"; 
+        const safeEmail = adminEmail.replace(/\./g, '_'); // Realtime DB doesn't like dots
+        
+        firebase.database().ref('users/' + safeEmail).set({
+            email: adminEmail,
+            role: "admin",
+            dashboards: ["SLA", "RCDC"],
+            packages: ["PKG1", "PKG3"]
+        }).then(() => {
+            document.querySelector('h2').innerText = "✅ Boom! Master Admin Created in Realtime Database. You can close this page now.";
+            document.querySelector('h2').style.color = "green";
+        }).catch(err => alert("Error: " + err));
+    </script>
+</body>
+</html>

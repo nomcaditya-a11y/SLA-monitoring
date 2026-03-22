@@ -102,6 +102,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleBtn = document.getElementById('toggle-sidebar');
     const closeBtn = document.getElementById('close-sidebar');
 
+    // 🟢 MAGIC: Package Level Security Enforcer
+    const rights = JSON.parse(sessionStorage.getItem("user_rights"));
+    
+    if (rights && rights.role !== 'admin') {
+        const allowedPkgs = rights.packages || [];
+        
+        // Agar PKG1 ka right nahi hai, toh button chupao aur PKG3 default kardo
+        if (!allowedPkgs.includes('PKG1')) {
+            btnPkg1.style.display = 'none';
+            setPkgMode('PKG3'); 
+        }
+        // Agar PKG3 ka right nahi hai, toh button chupao aur PKG1 default kardo
+        if (!allowedPkgs.includes('PKG3')) {
+            btnPkg3.style.display = 'none';
+            setPkgMode('PKG1');
+        }
+    }
+
     if (toggleBtn && sidebar) {
         toggleBtn.addEventListener('click', () => {
             if (window.innerWidth < 768) sidebar.classList.toggle('-translate-x-full');
@@ -331,30 +349,52 @@ function renderValue(valId, diffId, value, target, isOverall = false) {
 }
 
 // TREND CHART (Now uses Load 12H instead of 24H)
-function updateTrendChart(cBill, cLoad, cDaily) {
-    let allDates = [];
-    cDaily.forEach(r => { let d = r.slot_date || r.month; if(d) allDates.push(parseCustomDate(d)); });
-    cLoad.forEach(r => { let d = r.slot_date || r.month; if(d) allDates.push(parseCustomDate(d)); });
+// --- SURGICAL FIX: FORCED MONTH SYNC TREND CHART ---
+function updateTrendChart(cBill, cLoad, cDaily, selMonthStr) {
+    let tMonth = new Date().getMonth();
+    let tYear = new Date().getFullYear();
 
-    let latestDate = new Date(), validDates = allDates.filter(d => d && !isNaN(d));
-    if(validDates.length > 0) latestDate = new Date(Math.max.apply(null, validDates));
-    
-    let tMonth = latestDate.getMonth(), tYear = latestDate.getFullYear();
+    // 1. Force chart to use the EXACT Selected Month from Dropdown
+    if (selMonthStr && selMonthStr !== "ALL") {
+        let monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        // Ensure we only extract "Feb 2026" even if value has extra text
+        let cleanStr = selMonthStr.includes('(') ? selMonthStr.match(/\((.*?)\)/)[1] : selMonthStr;
+        let parts = cleanStr.split(" ");
+        if (parts.length === 2) {
+            tMonth = monthNames.indexOf(parts[0]);
+            tYear = parseInt(parts[1], 10);
+        }
+    } else {
+        // Fallback: If "ALL" selected, fetch latest available month from data
+        let allDates = [];
+        const extractD = r => {
+            let d = parseCustomDate(r.slot_date || r.month || r.date || r.billing_month);
+            if (d && !isNaN(d)) allDates.push(d.getTime());
+        };
+        cDaily.forEach(extractD); cLoad.forEach(extractD); cBill.forEach(extractD);
+        if (allDates.length > 0) {
+            let latest = new Date(Math.max(...allDates));
+            tMonth = latest.getMonth();
+            tYear = latest.getFullYear();
+        }
+    }
+
     let daysInMonth = new Date(tYear, tMonth + 1, 0).getDate(); 
-
     let dateGroups = {};
     let monthlyBillVal = NaN;
 
+    // 2. Extract Billing Data
     cBill.forEach(r => {
-        let dObj = parseCustomDate(r.slot_date || r.month);
+        let dObj = parseCustomDate(r.slot_date || r.month || r.date || r.billing_month);
         if(dObj && !isNaN(dObj) && dObj.getMonth() === tMonth && dObj.getFullYear() === tYear) {
             let v = getMetric(r, 'B72'); if(!isNaN(v)) monthlyBillVal = v;
         }
     });
 
+    // 3. Process Daily & Load arrays
     const process = (data, type, arrName) => {
         data.forEach(r => {
-            let dObj = parseCustomDate(r.slot_date || r.month);
+            let dObj = parseCustomDate(r.slot_date || r.month || r.date || r.billing_month);
             if (dObj && !isNaN(dObj) && dObj.getMonth() === tMonth && dObj.getFullYear() === tYear) {
                 let dStr = dObj.getFullYear() + "-" + String(dObj.getMonth() + 1).padStart(2, '0') + "-" + String(dObj.getDate()).padStart(2, '0');
                 if(!dateGroups[dStr]) dateGroups[dStr] = { loadVals: [], dailyVals: [] };
@@ -363,9 +403,11 @@ function updateTrendChart(cBill, cLoad, cDaily) {
             }
         });
     };
-    process(cLoad, 'L12', 'loadVals'); // Switched to 12H
+    
+    process(cLoad, 'L12', 'loadVals'); 
     process(cDaily, 'D24', 'dailyVals');
 
+    // 4. Map data perfectly to X-Axis Days
     let labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
     let billP = new Array(daysInMonth).fill(null);
     let loadP = new Array(daysInMonth).fill(null);
@@ -381,6 +423,7 @@ function updateTrendChart(cBill, cLoad, cDaily) {
         dailyP[dayIndex] = dV.length ? Number((dV.reduce((a,b)=>a+b)/dV.length).toFixed(1)) : null;
     });
 
+    // 5. Render onto the actual Chart
     trendChartFull.data.labels = labels; 
     trendChartFull.data.datasets[0].data = billP;
     trendChartFull.data.datasets[1].data = loadP; 
@@ -392,7 +435,6 @@ function updateTrendChart(cBill, cLoad, cDaily) {
         if ([1, 7, 14, 21, 28, daysInMonth].includes(label)) return label;
         return null;
     };
-
     trendChartFull.update();
 }
 
@@ -550,9 +592,11 @@ function applyFiltersAndRender() {
         let bL = document.getElementById('val-breach-load'); if(bL) bL.innerText = tableDataObj.filter(r => !isNaN(r.load12) && r.load12 < 99.0).length;
         let bB = document.getElementById('val-breach-bill'); if(bB) bB.innerText = tableDataObj.filter(r => !isNaN(r.bill168) && r.bill168 < 99.0).length;
 
+        // 👇 YAHAN FIX HUA HAI: selMonth ab explicitly pass ho raha hai
         updateTrendChart([...filterSheetData(db.PKG1_BILL, "PKG1", false, true), ...filterSheetData(db.PKG3_BILL, "PKG3", false, true)], 
                          [...filterSheetData(db.PKG1_LOAD, "PKG1", false, true), ...filterSheetData(db.PKG3_LOAD, "PKG3", false, true)], 
-                         [...filterSheetData(db.PKG1_DAILY, "PKG1", false, true), ...filterSheetData(db.PKG3_DAILY, "PKG3", false, true)]);
+                         [...filterSheetData(db.PKG1_DAILY, "PKG1", false, true), ...filterSheetData(db.PKG3_DAILY, "PKG3", false, true)],
+                         selMonth); // <-- YE CONNECTION MISSING THA
                          
         currentPage = 1;
         renderTable();

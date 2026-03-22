@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import psycopg2
 import subprocess
+import re
 from datetime import datetime
 
 # Dashboard ka source folder
@@ -37,7 +38,23 @@ QUERIES = {
 }
 
 # ==========================================
-# 3. INDIVIDUAL PACKAGE FETCH FUNCTION
+# 3. SAT CLEANING FUNCTION (IMPORTANT 🔥)
+# ==========================================
+def clean_sat(value):
+    if isinstance(value, str) and 'SAT' in value.upper():
+        match = re.search(r'\d+', value)
+        if match:
+            return f"SAT {match.group()}"
+    return value
+
+
+def normalize_sat_column(df):
+    if "sat_name" in df.columns:
+        df["sat_name"] = df["sat_name"].apply(clean_sat)
+    return df
+
+# ==========================================
+# 4. INDIVIDUAL PACKAGE FETCH FUNCTION
 # ==========================================
 def fetch_package_data(pkg):
     if not os.path.exists(SAVE_DIR):
@@ -51,17 +68,26 @@ def fetch_package_data(pkg):
         conn = psycopg2.connect(**DB_CONFIG[pkg])
         print(f"✅ Connected to {pkg} securely!\n")
         
+        # ===== DAILY =====
         print(f"⏳ Extracting {pkg} Daily Energy...")
-        pd.read_sql(QUERIES["DAILY"], conn).to_csv(os.path.join(SAVE_DIR, f"DAILY{pkg[-1]}.CSV"), index=False)
+        df = pd.read_sql(QUERIES["DAILY"], conn)
+        df = normalize_sat_column(df)
+        df.to_csv(os.path.join(SAVE_DIR, f"DAILY{pkg[-1]}.CSV"), index=False)
         
+        # ===== LOAD =====
         print(f"⏳ Extracting {pkg} Load Survey...")
-        pd.read_sql(QUERIES["LOAD"], conn).to_csv(os.path.join(SAVE_DIR, f"LOAD{pkg[-1]}.CSV"), index=False)
+        df = pd.read_sql(QUERIES["LOAD"], conn)
+        df = normalize_sat_column(df)
+        df.to_csv(os.path.join(SAVE_DIR, f"LOAD{pkg[-1]}.CSV"), index=False)
         
+        # ===== BILL =====
         print(f"⏳ Extracting {pkg} Billing Data...")
-        pd.read_sql(QUERIES["BILL"], conn).to_csv(os.path.join(SAVE_DIR, f"BILL{pkg[-1]}.CSV"), index=False)
+        df = pd.read_sql(QUERIES["BILL"], conn)
+        df = normalize_sat_column(df)
+        df.to_csv(os.path.join(SAVE_DIR, f"BILL{pkg[-1]}.CSV"), index=False)
         
         conn.close()
-        print(f"\n🎉 {pkg} Data successfully saved to CSVs!")
+        print(f"\n🎉 {pkg} Data cleaned & saved successfully!")
         
     except Exception as e:
         print(f"\n❌ Error fetching {pkg} data.")
@@ -69,7 +95,7 @@ def fetch_package_data(pkg):
         print(f"Detailed Error: {e}")
 
 # ==========================================
-# 4. GITHUB AUTO-PUSH FUNCTION
+# 5. GITHUB AUTO-PUSH FUNCTION
 # ==========================================
 def push_to_github():
     print(f"\n{'='*40}")
@@ -86,12 +112,12 @@ def push_to_github():
         print("🌐 Vercel will automatically update your live dashboard in ~1 minute!")
         
     except subprocess.CalledProcessError:
-        print("\n⚠️ Note: Git command failed. Ya toh data mein koi change nahi tha, ya Git properly configure nahi hai.")
+        print("\n⚠️ No changes detected or Git not configured properly.")
     except Exception as e:
-        print(f"\n❌ Unexpected error while pushing to GitHub: {e}")
+        print(f"\n❌ Unexpected error while pushing: {e}")
 
 # ==========================================
-# 5. INTERACTIVE MENU
+# 6. INTERACTIVE MENU
 # ==========================================
 if __name__ == "__main__":
     while True:
