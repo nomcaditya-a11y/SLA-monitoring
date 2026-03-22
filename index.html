@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+    // Agar pehle se login hai, toh login page skip karo
+    if (sessionStorage.getItem("genus_auth") === "true") {
+        window.location.href = "portal.html";
+    }
+</script>
     <meta charset="UTF-8">
     <title>Genus Power | Secure Login</title>
     <script src="https://cdn.tailwindcss.com"></script>

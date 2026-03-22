@@ -1,6 +1,25 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
+    <script>
+    // Check if user is logged in
+    const authStatus = sessionStorage.getItem("genus_auth");
+    const userRights = JSON.parse(sessionStorage.getItem("user_rights") || "{}");
+
+    if (authStatus !== "true") {
+        // Agar login nahi hai, toh 1 level bahar (Main Login) pe phenk do
+        window.location.href = "../index.html"; 
+    } else {
+        // Agar login hai, toh check karo ki uske paas "SLA" ka access hai ya nahi
+        // (Admins ko automatically allowed hai)
+        const hasSLA = userRights.role === "admin" || (userRights.dashboards && userRights.dashboards.includes("SLA"));
+        
+        if (!hasSLA) {
+            alert("Access Denied: You don't have rights for SLA Dashboard.");
+            window.location.href = "../portal.html";
+        }
+    }
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NOMC SLA Dashboard</title>
