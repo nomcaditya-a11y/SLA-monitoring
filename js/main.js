@@ -3,37 +3,91 @@
 // ==========================================
 const TARGET_SLA = 98.0; 
 const OVERALL_TARGET = 98.5; 
-const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbzQFjUaCRlhiLQdPutNPlBoHFaw1dSHwQyNu-ncWsZiGUIKj2gBHkQJ043fVrHyrpgrvw/exec";
 window.globalDashboardData = null;
 
 Chart.defaults.font.family = 'Inter, sans-serif';
 
+// --- ROBUST CSV PARSER ---
+function parseCSV(text) {
+    if(!text) return [];
+    let lines = text.trim().split('\n');
+    if(lines.length < 2) return [];
+    
+    let headers = lines[0].split(',').map(h => h.replace(/\r/g, '').replace(/(^"|"$)/g, '').trim().toLowerCase());
+    let result = [];
+    
+    for(let i = 1; i < lines.length; i++) {
+        let rowText = lines[i];
+        if(!rowText.trim()) continue;
+        
+        let values = rowText.split(',').map(v => v.replace(/\r/g, '').replace(/(^"|"$)/g, '').trim());
+        let obj = {};
+        headers.forEach((h, idx) => { obj[h] = values[idx] || ""; });
+        result.push(obj);
+    }
+    return result;
+}
+
+// --- FIX: ULTIMATE VALUE-BASED METRIC EXTRACTOR ---
+// --- SURGICAL FIX 1: AGGRESSIVE METRIC EXTRACTOR ---
+function getMetric(row, type) {
+    if(!row) return NaN;
+    
+    // 1. EXACT MATCH
+    if (type === 'B168' && row['percentage_168_hrs'] !== undefined) return parseFloat(row['percentage_168_hrs']);
+    if (type === 'B72' && row['percentage_72_hrs'] !== undefined) return parseFloat(row['percentage_72_hrs']);
+    if (type === 'L12' && row['percentage_1200_hrs'] !== undefined) return parseFloat(row['percentage_1200_hrs']);
+    if (type === 'L8' && row['percentage_0800_hrs'] !== undefined) return parseFloat(row['percentage_0800_hrs']);
+    if (type === 'D24' && row['sla_percentage'] !== undefined) return parseFloat(row['sla_percentage']);
+    if (type === 'METERS' && row['total_meters'] !== undefined) return parseFloat(row['total_meters']);
+
+    // 2. AGGRESSIVE FALLBACK (If PKG3 has % symbols or slight name changes)
+    const keys = Object.keys(row);
+    const findAggressive = (numStr) => {
+        let matches = keys.filter(k => k.includes(numStr));
+        for(let k of matches) {
+            if(k.includes('block') || k.includes('count')) continue;
+            let v = parseFloat(row[k]);
+            // Checks if value is a valid percentage OR explicitly has %, per, sla in header
+            if(!isNaN(v) && (v <= 100.5 || k.includes('per') || k.includes('sla') || k.includes('%'))) return k;
+        }
+        return undefined;
+    };
+    
+    let key;
+    if (type === 'B168') key = findAggressive('168');
+    if (type === 'B72')  key = findAggressive('72');
+    if (type === 'L12')  key = findAggressive('12');
+    if (type === 'L8')   key = findAggressive('8');
+    if (type === 'D24')  key = keys.find(k => k.includes('sla') || k.includes('%') || k.includes('daily'));
+    if (type === 'METERS') key = keys.find(k => k.includes('meter') || k.includes('total'));
+
+    if (key && row[key] !== undefined && row[key] !== '') {
+        let v = parseFloat(row[key]);
+        return isNaN(v) ? NaN : v;
+    }
+    return NaN;
+}
+
 // Setup UI Listeners
 document.addEventListener('DOMContentLoaded', () => {
-    // --- THEME TOGGLER LOGIC ---
     const themeToggleBtn = document.getElementById('theme-toggle');
     const darkIcon = document.getElementById('theme-toggle-dark-icon');
     const lightIcon = document.getElementById('theme-toggle-light-icon');
 
     if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-        lightIcon.classList.remove('hidden');
+        document.documentElement.classList.add('dark'); lightIcon.classList.remove('hidden');
     } else {
-        document.documentElement.classList.remove('dark');
-        darkIcon.classList.remove('hidden');
+        document.documentElement.classList.remove('dark'); darkIcon.classList.remove('hidden');
     }
 
     themeToggleBtn.addEventListener('click', () => {
-        darkIcon.classList.toggle('hidden'); 
-        lightIcon.classList.toggle('hidden');
+        darkIcon.classList.toggle('hidden'); lightIcon.classList.toggle('hidden');
         if (document.documentElement.classList.contains('dark')) {
-            document.documentElement.classList.remove('dark'); 
-            localStorage.setItem('color-theme', 'light');
+            document.documentElement.classList.remove('dark'); localStorage.setItem('color-theme', 'light');
         } else {
-            document.documentElement.classList.add('dark'); 
-            localStorage.setItem('color-theme', 'dark');
+            document.documentElement.classList.add('dark'); localStorage.setItem('color-theme', 'dark');
         }
-        
         if(typeof trendChartFull !== 'undefined') {
             let newColor = document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569';
             let newGrid = document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
@@ -44,68 +98,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- SIDEBAR TOGGLE LOGIC ---
     const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('toggle-sidebar');
     const closeBtn = document.getElementById('close-sidebar');
 
     if (toggleBtn && sidebar) {
         toggleBtn.addEventListener('click', () => {
-            if (window.innerWidth < 768) {
-                sidebar.classList.toggle('-translate-x-full');
-            } else {
-                sidebar.classList.toggle('hidden');
-            }
+            if (window.innerWidth < 768) sidebar.classList.toggle('-translate-x-full');
+            else sidebar.classList.toggle('hidden');
         });
     }
     if (closeBtn && sidebar) closeBtn.addEventListener('click', () => sidebar.classList.add('-translate-x-full'));
 
-    // --- PACKAGE TOGGLE LOGIC ---
     const btnPkg1 = document.getElementById('btn-pkg1');
     const btnPkg3 = document.getElementById('btn-pkg3');
     const filterPkg = document.getElementById('filter-pkg');
 
     function setPkgMode(pkg) {
-        filterPkg.value = pkg;
-        
-        // Active/Inactive Styling
+        if(filterPkg) filterPkg.value = pkg;
         const activeClass = "flex-1 py-1.5 text-[12px] font-bold rounded-md bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm transition-all z-10";
         const inactiveClass = "flex-1 py-1.5 text-[12px] font-bold rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all z-10";
         
         if(pkg === 'PKG1') {
-            btnPkg1.className = activeClass;
-            btnPkg3.className = inactiveClass;
+            if(btnPkg1) btnPkg1.className = activeClass;
+            if(btnPkg3) btnPkg3.className = inactiveClass;
         } else {
-            btnPkg3.className = activeClass;
-            btnPkg1.className = inactiveClass;
+            if(btnPkg3) btnPkg3.className = activeClass;
+            if(btnPkg1) btnPkg1.className = inactiveClass;
         }
-        
-        // Auto-refresh dashboard instantly on toggle click
-        if (window.globalDashboardData) {
-            applyFiltersAndRender();
-        }
+        if (window.globalDashboardData) applyFiltersAndRender();
     }
 
     if (btnPkg1 && btnPkg3) {
         btnPkg1.addEventListener('click', () => setPkgMode('PKG1'));
         btnPkg3.addEventListener('click', () => setPkgMode('PKG3'));
     }
-    // --- PROFILE DROPDOWN LOGIC ---
-    const profileBtn = document.getElementById('profile-btn');
-    const profileMenu = document.getElementById('profile-menu');
-    if (profileBtn && profileMenu) {
-        profileBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); 
-            profileMenu.classList.toggle('hidden');
-        });
-        document.addEventListener('click', (e) => {
-            if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
-                profileMenu.classList.add('hidden');
-            }
-        });
-    }
 
-    // --- CLOCK ---
     function updateLiveTime() {
         const timeElement = document.getElementById('update-time');
         if (timeElement) timeElement.innerText = `LIVE: ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
@@ -114,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 2. CHART INITIALIZATION (FULL WIDTH TREND)
+// 2. CHART INITIALIZATION
 // ==========================================
 let trendChartFull = new Chart(document.getElementById('trendChartFull').getContext('2d'), {
     type: 'line',
@@ -132,7 +160,14 @@ let trendChartFull = new Chart(document.getElementById('trendChartFull').getCont
         plugins: { legend: { position: 'top', labels: { boxWidth: 12, usePointStyle: true, padding: 20 } } }, 
         scales: { 
             y: { min: 80, max: 100, ticks: { font: {size: 11} } }, 
-            x: { grid: { display: false }, ticks: { font: {size: 11}, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } } 
+            x: { 
+                grid: { display: false }, 
+                ticks: { 
+                    font: {size: 11}, maxRotation: 0, 
+                    autoSkip: false,
+                    callback: function(val, index) { return this.getLabelForValue(val); }
+                } 
+            } 
         } 
     }
 });
@@ -146,17 +181,31 @@ const rowsPerPage = 10;
 
 function setLoader(state, text = "Crunching Data...") {
     const loader = document.getElementById('data-loader');
+    if(!loader) return;
     document.getElementById('loader-text').innerText = text;
     state ? loader.classList.remove('hidden') : loader.classList.add('hidden');
 }
 
 function parseCustomDate(dateVal) {
     if (!dateVal) return null;
+    if (!isNaN(dateVal) && Number(dateVal) > 10000) {
+        let ms = Math.round((Number(dateVal) - 25569) * 86400 * 1000);
+        let utcDate = new Date(ms);
+        return new Date(utcDate.getUTCFullYear(), utcDate.getUTCMonth(), utcDate.getUTCDate());
+    }
     if (typeof dateVal === 'string') {
-        if (dateVal.includes('T')) return new Date(dateVal); 
         if (dateVal.includes('/')) {
-            let p = dateVal.split(/[-/]/); 
-            if (p.length === 3) return new Date(p[2].length === 2 ? "20" + p[2] : p[2], p[0] - 1, p[1]);
+            let parts = dateVal.split('/');
+            if (parts.length === 3) {
+                let month = parseInt(parts[0], 10), day = parseInt(parts[1], 10), year = parseInt(parts[2], 10);  
+                if (year < 100) year += 2000;
+                return new Date(year, month - 1, day);
+            }
+        }
+        if (dateVal.includes('T')) return new Date(dateVal);
+        if (dateVal.includes('-')) {
+            let parts = dateVal.split('-');
+            if(parts.length === 3) return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
         }
     }
     return new Date(dateVal);
@@ -168,13 +217,36 @@ function getLocalMonthString(d) {
 }
 
 async function syncDashboardData() {
-    setLoader(true, "Downloading Cloud Data...");
+    setLoader(true, "Reading Local CSV Files...");
     try {
-        const response = await fetch(CLOUD_API_URL);
-        window.globalDashboardData = await response.json(); 
+        const [resDaily1, resLoad1, resBill1, resDaily3, resLoad3, resBill3] = await Promise.all([
+            fetch('./source/DAILY1.CSV').catch(() => null),
+            fetch('./source/LOAD1.CSV').catch(() => null),
+            fetch('./source/BILL1.CSV').catch(() => null),
+            fetch('./source/DAILY3.CSV').catch(() => null),
+            fetch('./source/LOAD3.CSV').catch(() => null),
+            fetch('./source/BILL3.CSV').catch(() => null)
+        ]);
+
+        let txtDaily1 = (resDaily1 && resDaily1.ok) ? await resDaily1.text() : "";
+        let txtLoad1 = (resLoad1 && resLoad1.ok) ? await resLoad1.text() : "";
+        let txtBill1 = (resBill1 && resBill1.ok) ? await resBill1.text() : "";
+        let txtDaily3 = (resDaily3 && resDaily3.ok) ? await resDaily3.text() : "";
+        let txtLoad3 = (resLoad3 && resLoad3.ok) ? await resLoad3.text() : "";
+        let txtBill3 = (resBill3 && resBill3.ok) ? await resBill3.text() : "";
+
+        window.globalDashboardData = {
+            PKG1_DAILY: parseCSV(txtDaily1), PKG1_LOAD: parseCSV(txtLoad1), PKG1_BILL: parseCSV(txtBill1),
+            PKG3_DAILY: parseCSV(txtDaily3), PKG3_LOAD: parseCSV(txtLoad3), PKG3_BILL: parseCSV(txtBill3)
+        };
+
         populateDropdowns();
         applyFiltersAndRender();
-    } catch (error) { console.error("Data Sync Error:", error); } 
+        
+    } catch (error) { 
+        console.error("Local Data Sync Error:", error); 
+        alert("Error reading CSV files! Ensure you are running a Local Web Server.");
+    } 
     finally { setLoader(false); }
 }
 
@@ -182,7 +254,7 @@ function populateDropdowns() {
     let db = window.globalDashboardData; if (!db) return;
     let sats = new Set(), uniqueMonths = new Set();
 
-    ["PKG1_BILL", "PKG3_BILL", "PKG1_LOAD", "PKG3_LOAD", "PKG1_DAILY", "PKG3_DAILY"].forEach(sheet => {
+    ["PKG1_DAILY", "PKG3_DAILY", "PKG1_LOAD", "PKG3_LOAD", "PKG1_BILL", "PKG3_BILL"].forEach(sheet => {
         if (db[sheet]) db[sheet].forEach(row => { 
             if (row.sat_name) sats.add(row.sat_name); 
             let rawDate = row.month || row.slot_date;
@@ -193,22 +265,37 @@ function populateDropdowns() {
         });
     });
 
-    let satSelect = document.getElementById('filter-sat'); satSelect.innerHTML = '<option value="ALL">All SATs</option>';
-    Array.from(sats).sort().forEach(sat => satSelect.innerHTML += `<option value="${sat}">${sat}</option>`);
+    let satSelect = document.getElementById('filter-sat'); 
+    if(satSelect) {
+        satSelect.innerHTML = '<option value="ALL">All SATs</option>';
+        Array.from(sats).sort().forEach(sat => satSelect.innerHTML += `<option value="${sat}">${sat}</option>`);
+    }
 
-    let timeSelect = document.getElementById('filter-time'); timeSelect.innerHTML = '';
-    let sortedMonths = Array.from(uniqueMonths).sort((a, b) => new Date(b) - new Date(a));
-    let now = new Date(), currentMonthStr = getLocalMonthString(now), prevMonthStr = getLocalMonthString(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+    let timeSelect = document.getElementById('filter-time'); 
+    if(timeSelect) {
+        timeSelect.innerHTML = '';
+        let sortedMonths = Array.from(uniqueMonths).sort((a, b) => new Date(b) - new Date(a));
+        let now = new Date(), currentMonthStr = getLocalMonthString(now), prevMonthStr = getLocalMonthString(new Date(now.getFullYear(), now.getMonth() - 1, 1));
 
-    sortedMonths.forEach(label => {
-        let finalOptionText = label === currentMonthStr ? `Current Month (${label})` : (label === prevMonthStr ? `Previous Month (${label})` : label);
-        timeSelect.innerHTML += `<option value="${label}">${finalOptionText}</option>`;
-    });
+        if(sortedMonths.length === 0) {
+            timeSelect.innerHTML += `<option value="ALL">No Data Found</option>`;
+        } else {
+            sortedMonths.forEach(label => {
+                let finalOptionText = label === currentMonthStr ? `Current Month (${label})` : (label === prevMonthStr ? `Previous Month (${label})` : label);
+                timeSelect.innerHTML += `<option value="${label}">${finalOptionText}</option>`;
+            });
+        }
+    }
 }
 
 function filterSheetData(sheetArray, targetPkg, ignorePkg = false, ignoreDate = false) {
     if (!sheetArray || sheetArray.length === 0) return [];
-    let selPkg = document.getElementById('filter-pkg').value, selSat = document.getElementById('filter-sat').value, selMonth = document.getElementById('filter-time').value;
+    let pkgEl = document.getElementById('filter-pkg');
+    let selPkg = pkgEl ? pkgEl.value : "ALL";
+    let satEl = document.getElementById('filter-sat');
+    let selSat = satEl ? satEl.value : "ALL";
+    let timeEl = document.getElementById('filter-time');
+    let selMonth = timeEl ? timeEl.value : "ALL";
 
     return sheetArray.filter(row => {
         let pkgMatch = ignorePkg ? true : (selPkg === "ALL" || selPkg === targetPkg);
@@ -220,13 +307,20 @@ function filterSheetData(sheetArray, targetPkg, ignorePkg = false, ignoreDate = 
     });
 }
 
-const getAvg = (arr, col) => { if (!arr || !arr.length) return 0; let sum = 0, count = 0; arr.forEach(r => { let v = parseFloat(r[col]); if(!isNaN(v)){ sum+=v; count++; }}); return count ? (sum/count) : 0; };
-const getSum = (arr, col) => arr && arr.length ? arr.reduce((s, r) => s + (parseFloat(r[col]) || 0), 0) : 0;
-
 function renderValue(valId, diffId, value, target, isOverall = false) {
-    let numVal = parseFloat(value) || 0;
-    document.getElementById(valId).innerText = numVal.toFixed(1) + "%";
-    let diff = numVal - target, diffEl = document.getElementById(diffId), suffix = isOverall ? "FROM PREV MONTH" : "FROM TARGET";
+    let valEl = document.getElementById(valId);
+    let diffEl = document.getElementById(diffId);
+    if(!valEl || !diffEl) return;
+    let suffix = isOverall ? "FROM PREV MONTH" : "FROM TARGET";
+
+    if (isNaN(value)) {
+        valEl.innerText = "N/A";
+        diffEl.innerHTML = `-- <span class="uppercase">${suffix}</span>`;
+        diffEl.className = "text-[10px] font-bold text-slate-500";
+        return;
+    }
+    valEl.innerText = value.toFixed(1) + "%";
+    let diff = value - target;
     if (diff >= 0) {
         diffEl.innerHTML = `▲ ${Math.abs(diff).toFixed(1)}% <span class="uppercase">${suffix}</span>`;
         diffEl.className = "text-[10px] font-bold text-emerald-500";
@@ -236,59 +330,72 @@ function renderValue(valId, diffId, value, target, isOverall = false) {
     }
 }
 
-function updateTrendChart(billData, loadData, dailyData) {
+// TREND CHART (Now uses Load 12H instead of 24H)
+function updateTrendChart(cBill, cLoad, cDaily) {
     let allDates = [];
-    dailyData.forEach(r => { if(r.slot_date) allDates.push(parseCustomDate(r.slot_date)); });
-    loadData.forEach(r => { if(r.slot_date) allDates.push(parseCustomDate(r.slot_date)); });
+    cDaily.forEach(r => { let d = r.slot_date || r.month; if(d) allDates.push(parseCustomDate(d)); });
+    cLoad.forEach(r => { let d = r.slot_date || r.month; if(d) allDates.push(parseCustomDate(d)); });
 
     let latestDate = new Date(), validDates = allDates.filter(d => d && !isNaN(d));
     if(validDates.length > 0) latestDate = new Date(Math.max.apply(null, validDates));
-    let tMonth = latestDate.getMonth(), tYear = latestDate.getFullYear(), dateGroups = {}, monthlyBillVal = 0;
+    
+    let tMonth = latestDate.getMonth(), tYear = latestDate.getFullYear();
+    let daysInMonth = new Date(tYear, tMonth + 1, 0).getDate(); 
 
-    billData.forEach(r => {
-        let dObj = r.slot_date ? parseCustomDate(r.slot_date) : (r.month ? new Date(r.month) : null);
-        if(dObj && !isNaN(dObj) && dObj.getMonth() === tMonth && dObj.getFullYear() === tYear) monthlyBillVal = parseFloat(r.percentage_72_hrs) || monthlyBillVal;
+    let dateGroups = {};
+    let monthlyBillVal = NaN;
+
+    cBill.forEach(r => {
+        let dObj = parseCustomDate(r.slot_date || r.month);
+        if(dObj && !isNaN(dObj) && dObj.getMonth() === tMonth && dObj.getFullYear() === tYear) {
+            let v = getMetric(r, 'B72'); if(!isNaN(v)) monthlyBillVal = v;
+        }
     });
 
-    const process = (data, col, arrName) => {
+    const process = (data, type, arrName) => {
         data.forEach(r => {
-            if (!r.slot_date) return;
-            let dObj = parseCustomDate(r.slot_date);
+            let dObj = parseCustomDate(r.slot_date || r.month);
             if (dObj && !isNaN(dObj) && dObj.getMonth() === tMonth && dObj.getFullYear() === tYear) {
                 let dStr = dObj.getFullYear() + "-" + String(dObj.getMonth() + 1).padStart(2, '0') + "-" + String(dObj.getDate()).padStart(2, '0');
                 if(!dateGroups[dStr]) dateGroups[dStr] = { loadVals: [], dailyVals: [] };
-                dateGroups[dStr][arrName].push(parseFloat(r[col])||0);
+                let v = getMetric(r, type);
+                if(!isNaN(v)) dateGroups[dStr][arrName].push(v);
             }
         });
     };
-    process(loadData, 'percentage_2400_hrs', 'loadVals'); process(dailyData, 'sla_percentage', 'dailyVals');
+    process(cLoad, 'L12', 'loadVals'); // Switched to 12H
+    process(cDaily, 'D24', 'dailyVals');
 
-    let sortedDates = Object.keys(dateGroups).sort(), labels = [], billP = [], loadP = [], dailyP = [], targetP = [];
-    sortedDates.forEach(d => {
-        labels.push(new Date(d + "T00:00:00").getDate()); 
-        billP.push(monthlyBillVal > 0 ? monthlyBillVal : null);
-        let lV = dateGroups[d].loadVals; loadP.push(lV.length ? Number((lV.reduce((a,b)=>a+b)/lV.length).toFixed(1)) : null);
-        let dV = dateGroups[d].dailyVals; dailyP.push(dV.length ? Number((dV.reduce((a,b)=>a+b)/dV.length).toFixed(1)) : null);
-        targetP.push(99.0); 
+    let labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
+    let billP = new Array(daysInMonth).fill(null);
+    let loadP = new Array(daysInMonth).fill(null);
+    let dailyP = new Array(daysInMonth).fill(null);
+    let targetP = new Array(daysInMonth).fill(99.0);
+
+    Object.keys(dateGroups).forEach(d => {
+        let dayIndex = new Date(d + "T00:00:00").getDate() - 1; 
+        billP[dayIndex] = !isNaN(monthlyBillVal) ? monthlyBillVal : null;
+        let lV = dateGroups[d].loadVals; 
+        loadP[dayIndex] = lV.length ? Number((lV.reduce((a,b)=>a+b)/lV.length).toFixed(1)) : null;
+        let dV = dateGroups[d].dailyVals; 
+        dailyP[dayIndex] = dV.length ? Number((dV.reduce((a,b)=>a+b)/dV.length).toFixed(1)) : null;
     });
 
-    trendChartFull.data.labels = labels.length ? labels : ['No Data']; 
+    trendChartFull.data.labels = labels; 
     trendChartFull.data.datasets[0].data = billP;
     trendChartFull.data.datasets[1].data = loadP; 
     trendChartFull.data.datasets[2].data = dailyP; 
     trendChartFull.data.datasets[3].data = targetP; 
     
-    let textColor = document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569';
-    let gridColor = document.documentElement.classList.contains('dark') ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-    trendChartFull.options.scales.x.ticks.color = textColor; trendChartFull.options.scales.y.ticks.color = textColor;
-    trendChartFull.options.scales.y.grid.color = gridColor;
-    
+    trendChartFull.options.scales.x.ticks.callback = function(val, index) {
+        let label = Number(this.getLabelForValue(val));
+        if ([1, 7, 14, 21, 28, daysInMonth].includes(label)) return label;
+        return null;
+    };
+
     trendChartFull.update();
 }
 
-// ------------------------------------------
-// NEW: Generate Table Data & Render with Target Diff
-// ------------------------------------------
 function renderTable() {
     const tbody = document.getElementById('sat-table-body');
     const info = document.getElementById('table-info');
@@ -296,45 +403,28 @@ function renderTable() {
     const btnNext = document.getElementById('btn-next');
     
     tbody.innerHTML = '';
-    
-    let start = (currentPage - 1) * rowsPerPage;
-    let end = start + rowsPerPage;
+    let start = (currentPage - 1) * rowsPerPage, end = start + rowsPerPage;
     let paginatedItems = tableDataObj.slice(start, end);
 
     if(tableDataObj.length === 0) {
         tbody.innerHTML = `<tr><td colspan="9" class="px-6 py-8 text-center text-slate-500">No Data Available for selected filters.</td></tr>`;
-        info.innerText = "Showing 0 to 0 of 0 SATs";
-        btnPrev.disabled = true; btnNext.disabled = true;
+        if(info) info.innerText = "Showing 0 to 0 of 0 SATs";
+        if(btnPrev) btnPrev.disabled = true; if(btnNext) btnNext.disabled = true;
         return;
     }
 
-    // Advanced formatter with Target Difference logic
     const formatSLAWithDiff = (val, target) => {
-        if(isNaN(val) || val === 0) return `<span class="text-slate-500">N/A</span>`;
-        
+        if(val === 0) return `<span class="text-slate-500 font-bold">0.0%</span>`; 
+        if(isNaN(val)) return `<span class="text-slate-400 font-medium">N/A</span>`; 
         let diff = val - target;
-        let diffHtml = '';
-        
-        if (diff >= 0) {
-            diffHtml = `<span class="text-[9px] text-emerald-500 ml-1.5 font-bold">▲ ${Math.abs(diff).toFixed(1)}%</span>`;
-        } else {
-            diffHtml = `<span class="text-[9px] text-rose-500 ml-1.5 font-bold">▼ -${Math.abs(diff).toFixed(1)}%</span>`;
-        }
-
-        let mainHtml = val >= target 
-            ? `<span class="text-emerald-500 font-bold">${val.toFixed(1)}%</span>` 
-            : `<span class="text-rose-500 font-bold">${val.toFixed(1)}%</span>`;
-
+        let diffHtml = diff >= 0 ? `<span class="text-[9px] text-emerald-500 ml-1.5 font-bold">▲ ${Math.abs(diff).toFixed(1)}%</span>` : `<span class="text-[9px] text-rose-500 ml-1.5 font-bold">▼ -${Math.abs(diff).toFixed(1)}%</span>`;
+        let mainHtml = val >= target ? `<span class="text-emerald-500 font-bold">${val.toFixed(1)}%</span>` : `<span class="text-rose-500 font-bold">${val.toFixed(1)}%</span>`;
         return `<div class="flex items-center">${mainHtml} ${diffHtml}</div>`;
     };
 
     paginatedItems.forEach(row => {
         let tr = document.createElement('tr');
-        
-        // Status Badge Logic (Based on Bill 168H >= 99%)
-        let statusBadge = row.bill168 >= 99.0 
-            ? `<span class="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-1 rounded text-[10px] font-bold tracking-wider">Compliant ✅</span>`
-            : `<span class="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-1 rounded text-[10px] font-bold tracking-wider">Warning ⚠️</span>`;
+        let statusBadge = (row.bill168 >= 99.0 || isNaN(row.bill168)) ? `<span class="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-1 rounded text-[10px] font-bold tracking-wider">Compliant ✅</span>` : `<span class="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-1 rounded text-[10px] font-bold tracking-wider">Warning ⚠️</span>`;
 
         tr.innerHTML = `
             <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200">${row.sat}</td>
@@ -342,7 +432,6 @@ function renderTable() {
             <td class="px-4 py-3">${formatSLAWithDiff(row.daily, 99.0)}</td>
             <td class="px-4 py-3">${formatSLAWithDiff(row.load8, 98.0)}</td>
             <td class="px-4 py-3">${formatSLAWithDiff(row.load12, 99.0)}</td>
-            <td class="px-4 py-3">${formatSLAWithDiff(row.load24, 99.0)}</td>
             <td class="px-4 py-3">${formatSLAWithDiff(row.bill72, 98.0)}</td>
             <td class="px-4 py-3 bg-slate-50 dark:bg-slate-800/30">${formatSLAWithDiff(row.bill168, 99.0)}</td>
             <td class="px-4 py-3">${statusBadge}</td>
@@ -350,153 +439,121 @@ function renderTable() {
         tbody.appendChild(tr);
     });
 
-    info.innerText = `Showing ${start + 1} to ${Math.min(end, tableDataObj.length)} of ${tableDataObj.length} SATs`;
-    btnPrev.disabled = currentPage === 1;
-    btnNext.disabled = end >= tableDataObj.length;
+    if(info) info.innerText = `Showing ${start + 1} to ${Math.min(end, tableDataObj.length)} of ${tableDataObj.length} SATs`;
+    if(btnPrev) btnPrev.disabled = currentPage === 1;
+    if(btnNext) btnNext.disabled = end >= tableDataObj.length;
 }
 
 document.getElementById('btn-prev')?.addEventListener('click', () => { if(currentPage > 1) { currentPage--; renderTable(); } });
 document.getElementById('btn-next')?.addEventListener('click', () => { if(currentPage * rowsPerPage < tableDataObj.length) { currentPage++; renderTable(); } });
 
-// ------------------------------------------
-// MASTER RENDER FUNCTION
-// ------------------------------------------
+function getLatestDataBySAT(dataArray) {
+    let latestMap = {};
+    dataArray.forEach(r => {
+        let sat = r.sat_name; if (!sat) return;
+        let dObj = parseCustomDate(r.slot_date || r.month);
+        if (!dObj || isNaN(dObj)) return;
+        
+        let time = dObj.getTime();
+        if (!latestMap[sat] || time > latestMap[sat].time) {
+            latestMap[sat] = { time: time, row: r };
+        }
+    });
+    return latestMap;
+}
+
 function applyFiltersAndRender() {
     setLoader(true, "Applying Filters...");
     setTimeout(() => {
         let db = window.globalDashboardData; if (!db) { setLoader(false); return; }
 
-        let selPkg = document.getElementById('filter-pkg').value;
-        let selMonth = document.getElementById('filter-time').value;
-        document.getElementById('main-title-pkg').innerText = selPkg;
+        let pkgEl = document.getElementById('filter-pkg');
+        let timeEl = document.getElementById('filter-time');
+        let selPkg = pkgEl ? pkgEl.value : "ALL";
+        let selMonth = timeEl ? timeEl.value : "ALL";
         
+        let titleEl = document.getElementById('main-title-pkg'); if(titleEl) titleEl.innerText = selPkg;
         let titleSuffix = selMonth === "ALL" ? "" : `(${selMonth})`;
-        document.getElementById('trend-month-title').innerText = titleSuffix;
-        document.getElementById('table-month-title').innerText = titleSuffix;
+        let tMonthEl = document.getElementById('trend-month-title'); if(tMonthEl) tMonthEl.innerText = titleSuffix;
+        let tableMonthEl = document.getElementById('table-month-title'); if(tableMonthEl) tableMonthEl.innerText = titleSuffix;
 
-        let f_p1_bill = filterSheetData(db.PKG1_BILL, "PKG1"), f_p3_bill = filterSheetData(db.PKG3_BILL, "PKG3");
-        let f_p1_load = filterSheetData(db.PKG1_LOAD, "PKG1"), f_p3_load = filterSheetData(db.PKG3_LOAD, "PKG3");
-        let f_p1_daily = filterSheetData(db.PKG1_DAILY, "PKG1"), f_p3_daily = filterSheetData(db.PKG3_DAILY, "PKG3");
+        let cBill = [...filterSheetData(db.PKG1_BILL, "PKG1"), ...filterSheetData(db.PKG3_BILL, "PKG3")];
+        let cLoad = [...filterSheetData(db.PKG1_LOAD, "PKG1"), ...filterSheetData(db.PKG3_LOAD, "PKG3")];
+        let cDaily = [...filterSheetData(db.PKG1_DAILY, "PKG1"), ...filterSheetData(db.PKG3_DAILY, "PKG3")];
 
-       let cBill = [...f_p1_bill, ...f_p3_bill], cLoad = [...f_p1_load, ...f_p3_load], cDaily = [...f_p1_daily, ...f_p3_daily];
+        let latestDailyMap = getLatestDataBySAT(cDaily);
+        let latestLoadMap = getLatestDataBySAT(cLoad);
+        let latestBillMap = getLatestDataBySAT(cBill);
 
-        // --- 1. Top KPIs (FIXED: Unique Meters Calculation) ---
-        let uniqueMetersMap = {};
+        let allSats = new Set([...Object.keys(latestDailyMap), ...Object.keys(latestLoadMap), ...Object.keys(latestBillMap)]);
+        tableDataObj = [];
         
-        // Step A: Har unique SAT ke highest/latest meters map mein store karo
-        cDaily.forEach(r => { 
-            if(r.sat_name && r.total_meters) {
-                uniqueMetersMap[r.sat_name] = Math.max(uniqueMetersMap[r.sat_name] || 0, parseFloat(r.total_meters));
-            }
+        // Sum variables specifically omitting 24H Load
+        let sumD24=0, countD24=0, sumL12=0, countL12=0, sumL8=0, countL8=0, sumB168=0, countB168=0, sumB72=0, countB72=0;
+        let totMeters = 0;
+
+        allSats.forEach(sat => {
+            let rDaily = latestDailyMap[sat] ? latestDailyMap[sat].row : null;
+            let rLoad = latestLoadMap[sat] ? latestLoadMap[sat].row : null;
+            let rBill = latestBillMap[sat] ? latestBillMap[sat].row : null;
+
+            let d24 = getMetric(rDaily, 'D24');
+            let l12 = getMetric(rLoad, 'L12'); let l8 = getMetric(rLoad, 'L8');
+            let b168 = getMetric(rBill, 'B168'); let b72 = getMetric(rBill, 'B72');
+
+            let m = getMetric(rDaily, 'METERS'); if(isNaN(m)) m = getMetric(rLoad, 'METERS'); if(isNaN(m)) m = getMetric(rBill, 'METERS');
+            let meters = isNaN(m) ? 0 : m;
+            totMeters += meters;
+
+            tableDataObj.push({ sat: sat, meters: meters, daily: d24, load12: l12, load8: l8, bill168: b168, bill72: b72 });
+
+            if(!isNaN(d24)) { sumD24+=d24; countD24++; }
+            if(!isNaN(l12)) { sumL12+=l12; countL12++; }
+            if(!isNaN(l8)) { sumL8+=l8; countL8++; }
+            if(!isNaN(b168)) { sumB168+=b168; countB168++; }
+            if(!isNaN(b72)) { sumB72+=b72; countB72++; }
         });
-        
-        // Step B: Agar Daily sheet khali hai, toh Load sheet se meters uthao
-        if(Object.keys(uniqueMetersMap).length === 0) {
-            cLoad.forEach(r => { 
-                if(r.sat_name && r.total_meters) {
-                    uniqueMetersMap[r.sat_name] = Math.max(uniqueMetersMap[r.sat_name] || 0, parseFloat(r.total_meters));
-                }
-            });
-        }
-        
-        // Step C: Ab in unique meters ka sum karo
-        let totMeters = Object.values(uniqueMetersMap).reduce((sum, val) => sum + val, 0);
-        
-        document.getElementById('val-total-meters').innerText = totMeters > 0 ? totMeters.toLocaleString('en-IN') : "0";
-        let aB72 = getAvg(cBill, 'percentage_72_hrs'), aB168 = getAvg(cBill, 'percentage_168_hrs');
-        let aL8 = getAvg(cLoad, 'percentage_0800_hrs'), aL12 = getAvg(cLoad, 'percentage_1200_hrs'), aL24 = getAvg(cLoad, 'percentage_2400_hrs');
-        let aD24 = getAvg(cDaily, 'sla_percentage'), overall = (aB72 + aL24 + aD24) / 3;
 
-        renderValue('val-overall-sla', 'diff-overall-sla', overall, OVERALL_TARGET, true); 
-        renderValue('val-bill-168', 'diff-bill-168', aB168, TARGET_SLA);
-        renderValue('val-bill-72', 'diff-bill-72', aB72, TARGET_SLA);
-        renderValue('val-load-24', 'diff-load-24', aL24, TARGET_SLA);
-        renderValue('val-load-8', 'diff-load-8', aL8, TARGET_SLA);
-        renderValue('val-load-12', 'diff-load-12', aL12, TARGET_SLA);
+        tableDataObj.sort((a, b) => a.sat.localeCompare(b.sat, undefined, { numeric: true, sensitivity: 'base' }));
+
+        let totMetersEl = document.getElementById('val-total-meters');
+        if(totMetersEl) totMetersEl.innerText = totMeters > 0 ? totMeters.toLocaleString('en-IN') : "0";
+
+        let aD24 = countD24 ? sumD24/countD24 : NaN; 
+        let aL12 = countL12 ? sumL12/countL12 : NaN; let aL8  = countL8 ? sumL8/countL8 : NaN;
+        let aB168 = countB168 ? sumB168/countB168 : NaN; let aB72  = countB72 ? sumB72/countB72 : NaN;
+        
+        let validComps = 0, sumComps = 0;
+        if(!isNaN(aB72)) { sumComps += aB72; validComps++; }
+        if(!isNaN(aL12)) { sumComps += aL12; validComps++; } // Overall SLA now uses Load 12H
+        if(!isNaN(aD24)) { sumComps += aD24; validComps++; }
+        let overallVal = validComps > 0 ? sumComps/validComps : NaN;
+
+        renderValue('val-overall-sla', 'diff-overall-sla', overallVal, OVERALL_TARGET, true); 
+        renderValue('val-bill-168', 'diff-bill-168', aB168, TARGET_SLA); renderValue('val-bill-72', 'diff-bill-72', aB72, TARGET_SLA);
+        renderValue('val-load-12', 'diff-load-12', aL12, TARGET_SLA); renderValue('val-load-8', 'diff-load-8', aL8, TARGET_SLA);
         renderValue('val-daily-24', 'diff-daily-24', aD24, TARGET_SLA);
 
+        // --- Exclusions & Breaches (Calculated using 12H instead of 24H) ---
         let exclPercDaily = Math.max(0, 100 - (isNaN(aD24) ? 100 : aD24));
-        let exclCountDaily = Math.round((totMeters * exclPercDaily) / 100);
-        
-        let exclPercLoad = Math.max(0, 100 - (isNaN(aL24) ? 100 : aL24));
-        let exclCountLoad = Math.round((totMeters * exclPercLoad) / 100);
-        
+        let exclPercLoad = Math.max(0, 100 - (isNaN(aL12) ? 100 : aL12));
         let exclPercBill = Math.max(0, 100 - (isNaN(aB168) ? 100 : aB168));
-        let exclCountBill = Math.round((totMeters * exclPercBill) / 100);
 
-        document.getElementById('excl-count-daily').innerText = exclCountDaily.toLocaleString('en-IN');
-        document.getElementById('excl-perc-daily').innerText = `(${exclPercDaily.toFixed(1)}%)`;
+        let eD = document.getElementById('excl-count-daily'); if(eD) eD.innerText = Math.round((totMeters * exclPercDaily) / 100).toLocaleString('en-IN');
+        let eDp = document.getElementById('excl-perc-daily'); if(eDp) eDp.innerText = `(${exclPercDaily.toFixed(1)}%)`;
+        let eL = document.getElementById('excl-count-load'); if(eL) eL.innerText = Math.round((totMeters * exclPercLoad) / 100).toLocaleString('en-IN');
+        let eLp = document.getElementById('excl-perc-load'); if(eLp) eLp.innerText = `(${exclPercLoad.toFixed(1)}%)`;
+        let eB = document.getElementById('excl-count-bill'); if(eB) eB.innerText = Math.round((totMeters * exclPercBill) / 100).toLocaleString('en-IN');
+        let eBp = document.getElementById('excl-perc-bill'); if(eBp) eBp.innerText = `(${exclPercBill.toFixed(1)}%)`;
 
-        document.getElementById('excl-count-load').innerText = exclCountLoad.toLocaleString('en-IN');
-        document.getElementById('excl-perc-load').innerText = `(${exclPercLoad.toFixed(1)}%)`;
+        let bD = document.getElementById('val-breach-daily'); if(bD) bD.innerText = tableDataObj.filter(r => !isNaN(r.daily) && r.daily < 99.0).length;
+        let bL = document.getElementById('val-breach-load'); if(bL) bL.innerText = tableDataObj.filter(r => !isNaN(r.load12) && r.load12 < 99.0).length;
+        let bB = document.getElementById('val-breach-bill'); if(bB) bB.innerText = tableDataObj.filter(r => !isNaN(r.bill168) && r.bill168 < 99.0).length;
 
-        document.getElementById('excl-count-bill').innerText = exclCountBill.toLocaleString('en-IN');
-        document.getElementById('excl-perc-bill').innerText = `(${exclPercBill.toFixed(1)}%)`;
-
-        document.getElementById('val-breach-daily').innerText = cDaily.filter(r => parseFloat(r.sla_percentage) < 99.0).length;
-        document.getElementById('val-breach-load').innerText = cLoad.filter(r => parseFloat(r.percentage_2400_hrs) < 99.0).length;
-        document.getElementById('val-breach-bill').innerText = cBill.filter(r => parseFloat(r.percentage_168_hrs) < 99.0).length;
-
-        updateTrendChart(
-            [...filterSheetData(db.PKG1_BILL, "PKG1", false, true), ...filterSheetData(db.PKG3_BILL, "PKG3", false, true)], 
-            [...filterSheetData(db.PKG1_LOAD, "PKG1", false, true), ...filterSheetData(db.PKG3_LOAD, "PKG3", false, true)], 
-            [...filterSheetData(db.PKG1_DAILY, "PKG1", false, true), ...filterSheetData(db.PKG3_DAILY, "PKG3", false, true)]
-        );
-
-        let satMap = {};
-        
-        cBill.forEach(r => {
-            let s = r.sat_name; if(!s) return;
-            if(!satMap[s]) satMap[s] = { sat: s, meters: 0, b168: [], b72: [], l24: [], l12: [], l8: [], daily: [] };
-            satMap[s].b168.push(parseFloat(r.percentage_168_hrs) || 0);
-            satMap[s].b72.push(parseFloat(r.percentage_72_hrs) || 0);
-        });
-        
-        cLoad.forEach(r => {
-            let s = r.sat_name; if(!s) return;
-            if(!satMap[s]) satMap[s] = { sat: s, meters: 0, b168: [], b72: [], l24: [], l12: [], l8: [], daily: [] };
-            satMap[s].l24.push(parseFloat(r.percentage_2400_hrs) || 0);
-            satMap[s].l12.push(parseFloat(r.percentage_1200_hrs) || 0);
-            satMap[s].l8.push(parseFloat(r.percentage_0800_hrs) || 0);
-        });
-
-        cDaily.forEach(r => {
-            let s = r.sat_name; if(!s) return;
-            if(!satMap[s]) satMap[s] = { sat: s, meters: 0, b168: [], b72: [], l24: [], l12: [], l8: [], daily: [] };
-            satMap[s].meters = Math.max(satMap[s].meters, parseFloat(r.total_meters) || 0);
-            satMap[s].daily.push(parseFloat(r.sla_percentage) || 0);
-        });
-
-        tableDataObj = [];
-        const avg = arr => arr.length ? arr.reduce((x,y)=>x+y)/arr.length : 0;
-
-        Object.keys(satMap).forEach(key => {
-            let row = satMap[key];
-            
-            let b168Avg = avg(row.b168);
-            let b72Avg = avg(row.b72);
-            let l24Avg = avg(row.l24);
-            let l12Avg = avg(row.l12);
-            let l8Avg = avg(row.l8);
-            let dAvg = avg(row.daily);
-            
-            tableDataObj.push({
-                sat: row.sat,
-                meters: row.meters,
-                bill168: b168Avg,
-                bill72: b72Avg,
-                load24: l24Avg,
-                load12: l12Avg,
-                load8: l8Avg,
-                daily: dAvg
-            });
-        });
-
-        // Default Sort: SAT Name (Alphanumeric Ascending)
-        tableDataObj.sort((a, b) => {
-            return a.sat.localeCompare(b.sat, undefined, { numeric: true, sensitivity: 'base' });
-        });
-        
+        updateTrendChart([...filterSheetData(db.PKG1_BILL, "PKG1", false, true), ...filterSheetData(db.PKG3_BILL, "PKG3", false, true)], 
+                         [...filterSheetData(db.PKG1_LOAD, "PKG1", false, true), ...filterSheetData(db.PKG3_LOAD, "PKG3", false, true)], 
+                         [...filterSheetData(db.PKG1_DAILY, "PKG1", false, true), ...filterSheetData(db.PKG3_DAILY, "PKG3", false, true)]);
+                         
         currentPage = 1;
         renderTable();
         
@@ -505,5 +562,10 @@ function applyFiltersAndRender() {
 }
 
 window.addEventListener('load', syncDashboardData);
-document.getElementById('refresh-btn').addEventListener('click', syncDashboardData);
-// Notice: apply-btn is no longer in HTML, toggle handles the update directly now
+let syncBtn = document.getElementById('refresh-btn');
+if(syncBtn) syncBtn.addEventListener('click', syncDashboardData);
+
+// --- FIX: MISSING APPLY FILTER EVENT LISTENER ADDED BACK ---
+let applyBtn = document.getElementById('apply-btn');
+if(applyBtn) applyBtn.addEventListener('click', applyFiltersAndRender);
+
