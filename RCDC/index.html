@@ -12,10 +12,10 @@
     } else {
         // Agar login hai, toh check karo ki uske paas "SLA" ka access hai ya nahi
         // (Admins ko automatically allowed hai)
-        const hasSLA = userRights.role === "admin" || (userRights.dashboards && userRights.dashboards.includes("SLA"));
+        const hasSLA = userRights.role === "admin" || (userRights.dashboards && userRights.dashboards.includes("RCDC"));
         
         if (!hasSLA) {
-            alert("Access Denied: You don't have rights for SLA Dashboard.");
+            alert("Access Denied: You don't have rights for RCDC Dashboard.");
             window.location.href = "../portal.html";
         }
     }
