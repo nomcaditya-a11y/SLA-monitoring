@@ -146,7 +146,20 @@
                 <h1 class="text-[16px] md:text-[18px] font-bold text-slate-800 dark:text-white tracking-wide truncate">
                     SLA Monitoring Dashboard - <span id="main-title-pkg" class="text-emerald-500">ALL</span>
                 </h1>
+               
+<a href="/portal.html" class="ml-6 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1e2230] border border-slate-200 dark:border-slate-700 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer text-slate-600 dark:text-slate-300">
+    
+    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+    </svg>
+
+    <span class="text-[11px] font-bold uppercase tracking-wide mt-0.5">Back to Portal</span>
+    
+</a>
+
             </div>
+
+            
 
             <div class="flex items-center space-x-2 md:space-x-4">
                 <button id="refresh-btn"
@@ -170,6 +183,8 @@
                             fill-rule="evenodd" clip-rule="evenodd"></path>
                     </svg>
                 </button>
+
+
 
                 <div class="h-5 w-px bg-slate-300 dark:bg-slate-700 hidden sm:block"></div>
 
@@ -213,43 +228,52 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2 mb-6 items-stretch">
 
-                <div class="kpi-card flex flex-col items-center justify-between text-center p-4 bg-white dark:bg-[#1e2230] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-lg w-full max-w-[280px] min-h-[170px] transition-all duration-300">
+                <div
+                    class="kpi-card flex flex-col items-center justify-between text-center p-4 bg-white dark:bg-[#1e2230] border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-lg w-full max-w-[280px] min-h-[170px] transition-all duration-300">
 
-    <div class="mb-1">
-        <h3 class="text-[14px] font-bold text-slate-800 dark:text-white tracking-tight leading-tight">Total SAT Meters</h3>
-        <p class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">SAT Completed</p>
-    </div>
+                    <div class="mb-1">
+                        <h3 class="text-[14px] font-bold text-slate-800 dark:text-white tracking-tight leading-tight">
+                            Total SAT Meters</h3>
+                        <p class="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">SAT
+                            Completed</p>
+                    </div>
 
-    <div id="val-total-meters" class="text-slate-900 dark:text-white text-3xl font-black tracking-tight leading-none my-2">
-        0
-    </div>
+                    <div id="val-total-meters"
+                        class="text-slate-900 dark:text-white text-3xl font-black tracking-tight leading-none my-2">
+                        0
+                    </div>
 
-    <div class="w-full h-px bg-slate-100 dark:bg-slate-700/30 mb-2"></div>
+                    <div class="w-full h-px bg-slate-100 dark:bg-slate-700/30 mb-2"></div>
 
-    <div class="w-full">
-        <div class="flex justify-between items-center px-1">
-            <div class="text-left">
-                <span class="text-[8px] text-slate-500 dark:text-slate-400 font-extrabold tracking-tighter block uppercase">Comm</span>
-                <div id="val-comm-meters" class="text-emerald-600 dark:text-emerald-500 text-lg font-black leading-tight">
-                    0
+                    <div class="w-full">
+                        <div class="flex justify-between items-center px-1">
+                            <div class="text-left">
+                                <span
+                                    class="text-[8px] text-slate-500 dark:text-slate-400 font-extrabold tracking-tighter block uppercase">Comm</span>
+                                <div id="val-comm-meters"
+                                    class="text-emerald-600 dark:text-emerald-500 text-lg font-black leading-tight">
+                                    0
+                                </div>
+                            </div>
+
+                            <div class="w-px h-6 bg-slate-200 dark:bg-slate-700/50"></div>
+
+                            <div class="text-right">
+                                <span
+                                    class="text-[8px] text-slate-500 dark:text-slate-400 font-extrabold tracking-tighter block uppercase">Non-Comm</span>
+                                <div id="val-noncomm-meters"
+                                    class="text-rose-600 dark:text-rose-500 text-lg font-black leading-tight">
+                                    0
+                                </div>
+                            </div>
+                        </div>
+
+                        <p
+                            class="text-[8px] font-black text-emerald-600 dark:text-emerald-500/80 mt-2 text-center tracking-[0.2em] uppercase">
+                            ▲ Live Sync
+                        </p>
+                    </div>
                 </div>
-            </div>
-
-            <div class="w-px h-6 bg-slate-200 dark:bg-slate-700/50"></div>
-
-            <div class="text-right">
-                <span class="text-[8px] text-slate-500 dark:text-slate-400 font-extrabold tracking-tighter block uppercase">Non-Comm</span>
-                <div id="val-noncomm-meters" class="text-rose-600 dark:text-rose-500 text-lg font-black leading-tight">
-                    0
-                </div>
-            </div>
-        </div>
-
-        <p class="text-[8px] font-black text-emerald-600 dark:text-emerald-500/80 mt-2 text-center tracking-[0.2em] uppercase">
-            ▲ Live Sync
-        </p>
-    </div>
-</div>
 
                 <div class="flex flex-col gap-2 h-full">
                     <div class="kpi-card flex-1 flex flex-col items-center justify-center text-center p-3">
@@ -358,123 +382,142 @@
 
                 <div class="flex flex-wrap gap-3 p-2">
 
-    <div class="bg-white dark:bg-[#1e2230] border border-slate-200 dark:border-slate-700/50 p-5 rounded-xl min-w-[320px] flex-1 max-w-[380px] flex items-center justify-between shadow-lg">
-        <div>
-            <h3 class="text-[11px] font-bold text-slate-600 dark:text-slate-400 tracking-widest uppercase mb-1">
-                Daily Energy
-            </h3>
-            <p class="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">Monthly Penalty</p>
-        </div>
-        <div class="text-right">
-            <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-wider block mb-0.5">DAILY</span>
-            <div id="pen-daily" class="text-rose-600 dark:text-[#ff4057] text-2xl font-black leading-none">0.0</div>
-        </div>
-    </div>
-
-    <div class="bg-white dark:bg-[#1e2230] border border-slate-200 dark:border-slate-700/50 p-5 rounded-xl min-w-[340px] flex-1 max-w-[400px] flex items-center justify-between shadow-lg">
-        <div>
-            <h3 class="text-[11px] font-bold text-slate-600 dark:text-slate-400 tracking-widest uppercase mb-1">
-                Load Survey
-            </h3>
-            <p class="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">Monthly Penalty</p>
-        </div>
-        <div class="flex items-center gap-4">
-            <div class="text-right">
-                <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-wider block mb-0.5">8H</span>
-                <div id="pen-load-8" class="text-rose-600 dark:text-[#ff4057] text-2xl font-black leading-none">0.0</div>
-            </div>
-            
-            <div class="w-px h-8 bg-slate-200 dark:bg-slate-700/50"></div>
-            
-            <div class="text-right">
-                <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-wider block mb-0.5">12H</span>
-                <div id="pen-load-12" class="text-rose-600 dark:text-[#ff4057] text-2xl font-black leading-none">0.0</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white dark:bg-[#1e2230] border border-slate-200 dark:border-slate-700/50 p-5 rounded-xl min-w-[340px] flex-1 max-w-[400px] flex items-center justify-between shadow-lg">
-        <div>
-            <h3 class="text-[11px] font-bold text-slate-600 dark:text-slate-400 tracking-widest uppercase mb-1">
-                Bill Profile
-            </h3>
-            <p class="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">Monthly Penalty</p>
-        </div>
-        <div class="flex items-center gap-4">
-            <div class="text-right">
-                <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-wider block mb-0.5">72H</span>
-                <div id="pen-bill-72" class="text-rose-600 dark:text-[#ff4057] text-2xl font-black leading-none">0.0</div>
-            </div>
-            
-            <div class="w-px h-8 bg-slate-200 dark:bg-slate-700/50"></div>
-            
-            <div class="text-right">
-                <span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-wider block mb-0.5">168H</span>
-                <div id="pen-bill-168" class="text-rose-600 dark:text-[#ff4057] text-2xl font-black leading-none">0.0</div>
-            </div>
-        </div>
-    </div>
-
-</div>
-            <div class="mb-8">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-[13px] font-bold text-slate-800 dark:text-white uppercase tracking-widest">
-                        Detailed
-                        SAT-Wise Operational Data <span class="text-emerald-500" id="table-month-title"></span></h2>
-                </div>
-
-                <div class="kpi-card overflow-hidden flex flex-col">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead
-                                class="bg-slate-100 dark:bg-[#111620] border-b border-slate-200 dark:border-dashBorder text-[11px] uppercase font-bold text-slate-500 dark:text-slate-400">
-                                <tr>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">SAT Name
-                                        ↕
-                                    </th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Total
-                                        Meters
-                                    </th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Daily
-                                        Energy
-                                        %</th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Load 8H %
-                                    </th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Load 12H
-                                        %
-                                    </th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Bill 72H
-                                        %
-                                    </th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Bill 168H
-                                        %
-                                    </th>
-                                    <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Status
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody id="sat-table-body"
-                                class="divide-y divide-slate-100 dark:divide-dashBorder text-slate-700 dark:text-slate-300 text-[12px] font-medium">
-                            </tbody>
-                        </table>
+                    <div
+                        class="bg-white dark:bg-[#1e2230] border border-slate-200 dark:border-slate-700/50 p-5 rounded-xl min-w-[320px] flex-1 max-w-[380px] flex items-center justify-between shadow-lg">
+                        <div>
+                            <h3
+                                class="text-[11px] font-bold text-slate-600 dark:text-slate-400 tracking-widest uppercase mb-1">
+                                Daily Energy
+                            </h3>
+                            <p class="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">Monthly
+                                Penalty</p>
+                        </div>
+                        <div class="text-right">
+                            <span
+                                class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-wider block mb-0.5">DAILY</span>
+                            <div id="pen-daily"
+                                class="text-rose-600 dark:text-[#ff4057] text-2xl font-black leading-none">0.0</div>
+                        </div>
                     </div>
 
                     <div
-                        class="bg-slate-50 dark:bg-[#161b26] px-6 py-4 border-t border-slate-200 dark:border-dashBorder flex items-center justify-between">
-                        <span class="text-[11px] font-semibold text-slate-500" id="table-info">Showing 0 to 0 of 0
-                            SATs</span>
-                        <div class="flex space-x-2">
-                            <button
-                                class="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                                id="btn-prev">Previous</button>
-                            <button
-                                class="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                                id="btn-next">Next</button>
+                        class="bg-white dark:bg-[#1e2230] border border-slate-200 dark:border-slate-700/50 p-5 rounded-xl min-w-[340px] flex-1 max-w-[400px] flex items-center justify-between shadow-lg">
+                        <div>
+                            <h3
+                                class="text-[11px] font-bold text-slate-600 dark:text-slate-400 tracking-widest uppercase mb-1">
+                                Load Survey
+                            </h3>
+                            <p class="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">Monthly
+                                Penalty</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="text-right">
+                                <span
+                                    class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-wider block mb-0.5">8H</span>
+                                <div id="pen-load-8"
+                                    class="text-rose-600 dark:text-[#ff4057] text-2xl font-black leading-none">0.0</div>
+                            </div>
+
+                            <div class="w-px h-8 bg-slate-200 dark:bg-slate-700/50"></div>
+
+                            <div class="text-right">
+                                <span
+                                    class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-wider block mb-0.5">12H</span>
+                                <div id="pen-load-12"
+                                    class="text-rose-600 dark:text-[#ff4057] text-2xl font-black leading-none">0.0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-[#1e2230] border border-slate-200 dark:border-slate-700/50 p-5 rounded-xl min-w-[340px] flex-1 max-w-[400px] flex items-center justify-between shadow-lg">
+                        <div>
+                            <h3
+                                class="text-[11px] font-bold text-slate-600 dark:text-slate-400 tracking-widest uppercase mb-1">
+                                Bill Profile
+                            </h3>
+                            <p class="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase">Monthly
+                                Penalty</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="text-right">
+                                <span
+                                    class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-wider block mb-0.5">72H</span>
+                                <div id="pen-bill-72"
+                                    class="text-rose-600 dark:text-[#ff4057] text-2xl font-black leading-none">0.0</div>
+                            </div>
+
+                            <div class="w-px h-8 bg-slate-200 dark:bg-slate-700/50"></div>
+
+                            <div class="text-right">
+                                <span
+                                    class="text-[9px] text-slate-400 dark:text-slate-500 font-bold tracking-wider block mb-0.5">168H</span>
+                                <div id="pen-bill-168"
+                                    class="text-rose-600 dark:text-[#ff4057] text-2xl font-black leading-none">0.0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="mb-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-[13px] font-bold text-slate-800 dark:text-white uppercase tracking-widest">
+                            Detailed
+                            SAT-Wise Operational Data <span class="text-emerald-500" id="table-month-title"></span></h2>
+                    </div>
+
+                    <div class="kpi-card overflow-hidden flex flex-col">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm whitespace-nowrap">
+                                <thead
+                                    class="bg-slate-100 dark:bg-[#111620] border-b border-slate-200 dark:border-dashBorder text-[11px] uppercase font-bold text-slate-500 dark:text-slate-400">
+                                    <tr>
+                                        <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">SAT Name
+                                            ↕
+                                        </th>
+                                        <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Total
+                                            Meters
+                                        </th>
+                                        <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Daily
+                                            Energy
+                                            %</th>
+                                        <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Load 8H %
+                                        </th>
+                                        <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Load 12H
+                                            %
+                                        </th>
+                                        <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Bill 72H
+                                            %
+                                        </th>
+                                        <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Bill 168H
+                                            %
+                                        </th>
+                                        <th class="px-4 py-4 cursor-pointer hover:text-emerald-500 transition">Status
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sat-table-body"
+                                    class="divide-y divide-slate-100 dark:divide-dashBorder text-slate-700 dark:text-slate-300 text-[12px] font-medium">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div
+                            class="bg-slate-50 dark:bg-[#161b26] px-6 py-4 border-t border-slate-200 dark:border-dashBorder flex items-center justify-between">
+                            <span class="text-[11px] font-semibold text-slate-500" id="table-info">Showing 0 to 0 of 0
+                                SATs</span>
+                            <div class="flex space-x-2">
+                                <button
+                                    class="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                                    id="btn-prev">Previous</button>
+                                <button
+                                    class="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                                    id="btn-next">Next</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
     </main>
 
     <script src="js/main.js"></script>
