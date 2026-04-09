@@ -17,10 +17,49 @@ let currentMapZone = "ALL";
 let currentMapAging = "Above 3 Months"; 
 let currentMapComm = "NonComm"; 
 
+// ==========================================
+// --- NEW LOCAL EXCEL FETCH FUNCTION ---
+// ==========================================
+async function fetchMeterData(pkgType) {
+    try {
+        // Set path based on your exact file location inside your project
+        if (pkgType === 'pkg1') {
+            filePath = "./source/pkg-01.xlsx";  // PKG1 ki file ka naam
+        } else if (pkgType === 'pkg3') {
+            filePath = "./source/pkg-03.xlsx";  // PKG3 ki file ka naam
+        } else {
+            filePath = "./source/pkg-01.xlsx";  // Fallback (agar kuch aur ho)
+        }
+
+        console.log(`⏳ Fetching Local File: ${filePath}`);
+
+        // Read the file using browser's fetch API
+        const response = await fetch(filePath);
+        if (!response.ok) throw new Error("Local Excel file not found or path is wrong.");
+        
+        const arrayBuffer = await response.arrayBuffer();
+
+        // Use SheetJS to read the binary data
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+        // Get the first sheet
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+
+        // Convert the sheet to JSON array
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" }); 
+
+        console.log(`✅ EXCEL LOADED SUCCESS! Total Rows:`, jsonData.length);
+        return jsonData;
+
+    } catch (error) {
+        console.error("❌ ERROR LOADING EXCEL:", error);
+        return []; 
+    }
+}
+
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
-   // ==========================================
-   
     // Check Dark Mode
     if (localStorage.getItem('theme') === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
@@ -28,7 +67,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(themeBtn) themeBtn.innerText = '☀️';
     }
 
-const data = await fetchMeterData('pkg3');
+    // Call the newly added fetchMeterData function
+    const data = await fetchMeterData('pkg1'); // Ensure this matches what you want to load first
+    
     if (data && data.length > 0) {
         rawData = data;
         filteredData = [...rawData]; 
@@ -48,11 +89,13 @@ const data = await fetchMeterData('pkg3');
         document.getElementById('map-aging-filter').addEventListener('change', e => { currentMapAging = e.target.value; updateMapFilters(); updateMapMarkers(); });
         document.getElementById('map-comm-filter').addEventListener('change', e => { currentMapComm = e.target.value; updateMapFilters(); updateMapMarkers(); });
     } else {
-        document.getElementById('connection-status').innerHTML = `🔴 Error connecting to database`;
+        document.getElementById('connection-status').innerHTML = `🔴 Error loading Excel file`;
         document.getElementById('connection-status').style.color = "#ef4444";
     }
 
-    setInterval(refreshData, 300000); // Auto-refresh data every 5 minutes
+    // Since it's a local file, auto-refresh every 5 minutes might not automatically
+    // pick up changes unless the user saves the Excel file AND the browser disables cache for that file.
+    setInterval(refreshData, 300000); 
 });
 
 // --- HELPER FUNCTIONS ---
@@ -139,9 +182,6 @@ function populateGlobalFiltersInitial() {
     syncDependentFilters();
 }
 
-// --- STRICT MM/DD/YYYY DATE PARSER ---
-// --- STRICT DD/MM/YYYY DATE PARSER (Fixed for Indian Format) ---
-// --- STRICT MM/DD/YYYY DATE PARSER ---
 function parseDateString(dateStr) {
     if (!dateStr || dateStr === '#N/A' || dateStr.toString().trim() === '') return null;
     let str = dateStr.toString().trim().split(' ')[0];
@@ -151,7 +191,7 @@ function parseDateString(dateStr) {
         return new Date((parseFloat(str) - 25569) * 86400 * 1000);
     }
 
-    // 2. Handle MM/DD/YYYY or MM-DD-YYYY
+    // 2. Handle MM/DD/YYYY or DD-MM-YYYY
     let parts = str.includes('/') ? str.split('/') : str.split('-');
     
     if (parts.length === 3) {
@@ -163,10 +203,10 @@ function parseDateString(dateStr) {
             let strictDate = new Date(`${year}-${month}-${day}T00:00:00`);
             if (!isNaN(strictDate.getTime())) return strictDate;
         } 
-        // MM/DD/YYYY Format
+        // DD/MM/YYYY
         else {
-            let month = parts[0].padStart(2, '0'); // Month is FIRST
-            let day = parts[1].padStart(2, '0');   // Day is SECOND
+            let day = parts[0].padStart(2, '0'); 
+            let month = parts[1].padStart(2, '0');   
             let year = parts[2];
             if (year.length === 2) year = '20' + year; 
             
@@ -264,32 +304,23 @@ function getMediumCounts(data) {
     return {rf, cell};
 }
 
-// --- HYBRID KPIs WITH LRCF, TODAY'S ACTIVITY & SAT LOGIC ---
 // --- DIRECT STATUS-BASED KPIs ---
 function updateKPIs(data) {
-    // Arrays for counting and holding data
     let totalData = [], reconData = [], discData = [];
-    
-    // Arrays for SAT section
     satTotal = []; satRecon = []; satDisc = []; 
 
     data.forEach(r => {
-        // 1. Excel se exact column values uthana (Case-insensitive)
         let status = (safeGet(r, 'Status') || "").toLowerCase().trim();
         let satValue = (safeGet(r, 'Sat Meters') || "").toString().toLowerCase().trim();
 
-        // 2. MAIN KPI LOGIC (Sirf Status ke basis par)
-        totalData.push(r); // Jo bhi data load hua hai, wo Total mein jayega
+        totalData.push(r); 
 
         if (status.includes('recon')) {
-            // Agar status mein 'recon' (Reconnected) hai
             reconData.push(r);
         } else {
-            // Agar reconnected nahi hai, toh wo Still Disconnected/Pending mein jayega
             discData.push(r);
         }
 
-        // 3. SAT METERS LOGIC (Agar 'Sat Meters' column mein "SAT" likha hai)
         if (satValue.includes("sat")) {
             satTotal.push(r);
             
@@ -301,13 +332,10 @@ function updateKPIs(data) {
         }
     });
 
-    // ==========================================
     // --- UPDATE HTML DOM FOR MAIN KPIs ---
-    // ==========================================
-    
     if(document.getElementById('kpi-total')) {
         document.getElementById('kpi-total').innerText = totalData.length;
-        let tM = getMediumCounts(totalData); // Comm Medium (RF/Cell) calculate karega
+        let tM = getMediumCounts(totalData); 
         if(document.getElementById('sub-total')) document.getElementById('sub-total').innerHTML = `Cell: ${tM.cell} | RF: ${tM.rf}`;
     }
 
@@ -323,10 +351,7 @@ function updateKPIs(data) {
         if(document.getElementById('sub-disc')) document.getElementById('sub-disc').innerHTML = `Cell: ${dM.cell} | RF: ${dM.rf}`;
     }
 
-    // ==========================================
     // --- UPDATE HTML DOM FOR SAT CARD ---
-    // ==========================================
-    
     if(document.getElementById('kpi-sat-total')) {
         document.getElementById('kpi-sat-total').innerText = satTotal.length;
         let sT = getMediumCounts(satTotal);
@@ -342,7 +367,6 @@ function updateKPIs(data) {
     if(document.getElementById('kpi-sat-disc')) {
         document.getElementById('kpi-sat-disc').innerText = satDisc.length;
         
-        // SAT Disconnected meters ko Comm aur Non-Comm mein baatna
         let commMeters = satDisc.filter(r => {
             let c = (safeGet(r, 'Comm Status') || "").toLowerCase();
             return !c.includes('non') && c.trim() !== "";
@@ -378,8 +402,7 @@ function drawTrendChart(data) {
             }
         }
 
-        if (row._isRValid && status.includes('reconnected')) {
-            // Added typo fallback here just in case!
+        if (row._isRValid && status.includes('recon')) {
             let recDate = parseDateString(safeGet(row, 'Reconnection date') || safeGet(row, 'Reconnecion date'));
             if (recDate) {
                 const recMonth = recDate.toLocaleString('default', { month: 'short', year: 'numeric' });
@@ -408,12 +431,10 @@ function drawTrendChart(data) {
             plugins: { 
                 datalabels: { 
                     font: { weight: 'bold' },
-                    // NEW: Clean up overlapping labels!
                     display: function(context) { 
-                        return context.dataset.data[context.dataIndex] > 0; // Hides the annoying 0s
+                        return context.dataset.data[context.dataIndex] > 0;
                     },
                     align: function(context) {
-                        // Yellow on top, Blue on bottom so they never overlap
                         return context.datasetIndex === 0 ? 'top' : 'bottom'; 
                     }
                 } 
@@ -443,7 +464,7 @@ function drawRegionChart(data) {
 
 function drawCommStatusChart(data) {
     destroyChart('commStatusChart');
-    const discData = data.filter(r => r._isDValid && (safeGet(r, 'Status')||"").toLowerCase().includes('disconnected'));
+    const discData = data.filter(r => r._isDValid && (safeGet(r, 'Status')||"").toLowerCase().includes('disc'));
     const counts = discData.reduce((acc, row) => {
         const s = safeGet(row, 'Comm Status') || 'Unknown';
         acc[s] = (acc[s] || 0) + 1;
@@ -539,7 +560,6 @@ function getAgingBucket(d) {
 }
 
 // --- ACCORDION AGING TABLE ---
-// --- ACCORDION AGING TABLE ---
 function buildAgingTable(data) {
     const groupByCol = getGroupingColumn();
     const childCol = getChildColumn(groupByCol);
@@ -549,9 +569,8 @@ function buildAgingTable(data) {
         document.getElementById('dynamic-aging-title').innerText = `Still Disconnected Aging Analysis - ${displayHeader}`;
     }
     
-    let discData = data.filter(r => r._isDValid && (safeGet(r, 'Status')||"").toLowerCase().includes('disconnected'));
+    let discData = data.filter(r => r._isDValid && (safeGet(r, 'Status')||"").toLowerCase().includes('disc'));
     
-    // --- NEW: APPLY LOCAL TABLE FILTERS ---
     const satFilter = document.getElementById('aging-sat-filter') ? document.getElementById('aging-sat-filter').value : "ALL";
     const commFilter = document.getElementById('aging-comm-filter') ? document.getElementById('aging-comm-filter').value : "ALL";
 
@@ -659,7 +678,7 @@ function buildAgingTable(data) {
 
 // --- MAP & NEIGHBORS ---
 function updateMapFilters() {
-    const mapData = filteredData.filter(r => r._isDValid && (safeGet(r, 'Status')||"").toLowerCase().includes('disconnected'));
+    const mapData = filteredData.filter(r => r._isDValid && (safeGet(r, 'Status')||"").toLowerCase().includes('disc'));
     
     let cData = mapData;
     if (currentMapComm === "NonComm") cData = cData.filter(r => (safeGet(r, 'Comm Status')||"").toLowerCase().includes('non'));
@@ -713,7 +732,7 @@ function updateMapMarkers() {
     const greenPin = L.divIcon({ html: greenPinHtml, className: '', iconSize: [24, 24], iconAnchor: [12, 24], popupAnchor: [0, -24] });
     const bluePin = L.divIcon({ html: bluePinHtml, className: '', iconSize: [24, 24], iconAnchor: [12, 24], popupAnchor: [0, -24] });
 
-    filteredData.filter(r => r._isDValid && (safeGet(r, 'Status')||"").toLowerCase().includes('disconnected')).forEach(row => {
+    filteredData.filter(r => r._isDValid && (safeGet(r, 'Status')||"").toLowerCase().includes('disc')).forEach(row => {
         const bucket = getAgingBucket(parseDateString(safeGet(row, 'disc. date')));
         const commStat = (safeGet(row, 'Comm Status') || "").toLowerCase();
         
@@ -1036,4 +1055,3 @@ async function exportBoxData(type, format) {
         doc.save(`RCDC_${type}_RawData_${new Date().toISOString().slice(0,10)}.pdf`);
     }
 }
-
