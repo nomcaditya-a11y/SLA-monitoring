@@ -20,19 +20,26 @@ let currentMapComm = "NonComm";
 // ==========================================
 // --- NEW LOCAL EXCEL FETCH FUNCTION ---
 // ==========================================
+// ==========================================
+// --- NEW LOCAL EXCEL FETCH FUNCTION ---
+// ==========================================
 async function fetchMeterData(pkgType) {
     try {
-        // Set path based on your exact file location inside your project
+        let filePath = "";
+        
+        // 👇 YAHAN PATH MEIN '../' LAGANA HAI 👇
         if (pkgType === 'pkg1') {
-            filePath = "../source/pkg-01.xlsx";  // PKG1 ki file ka naam
+            // '../' ka matlab hai rcdc folder se bahar niklo, phir source mein jao
+            filePath = "../source/pkg-01.xlsx"; 
         } else if (pkgType === 'pkg3') {
-            filePath = "../source/pkg-03.xlsx";  // PKG3 ki file ka naam
+            filePath = "../source/pkg-03.xlsx"; 
         } else {
-            filePath = "../source/pkg-01.xlsx";  // Fallback (agar kuch aur ho)
+            filePath = "../source/pkg-01.xlsx"; 
         }
+        // 👆 👆 👆
 
         console.log(`⏳ Fetching Local File: ${filePath}`);
-
+        
         // Read the file using browser's fetch API
         const response = await fetch(filePath);
         if (!response.ok) throw new Error("Local Excel file not found or path is wrong.");
