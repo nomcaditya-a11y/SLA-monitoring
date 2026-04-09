@@ -14,7 +14,7 @@ let markerGroup = null;
 let neighborGroup = null;
 
 let currentMapZone = "ALL";
-let currentMapAging = "Above 4 Months"; 
+let currentMapAging = "Above 3 Months"; 
 let currentMapComm = "NonComm"; 
 
 // ==========================================
@@ -280,7 +280,7 @@ function applyGlobalFilters() {
     });
 
     currentMapZone = "ALL"; 
-    currentMapAging = "Above 4 Months"; 
+    currentMapAging = "Above 3 Months"; 
     currentMapComm = "NonComm"; 
     renderDashboard();
 }
@@ -565,7 +565,7 @@ function buildProgressTable(data) {
 function getAgingBucket(d) {
     if (!d) return "Unknown";
     const diff = Math.floor((new Date().getTime() - d.getTime()) / (1000 * 3600 * 24));
-    if (diff > 90) return "Above 4 Months"; if (diff > 60) return "Above 2 Months";
+    if (diff > 90) return "Above 3 Months"; if (diff > 60) return "Above 2 Months";
     if (diff > 30) return "Above 1 Month"; if (diff > 15) return "Above 15 Days"; return "Below 15 Days"; 
 }
 
@@ -596,14 +596,14 @@ function buildAgingTable(data) {
         });
     }
 
-    const buckets = ["Above 4 Months","Above 3 Months", "Above 2 Months", "Above 1 Month", "Above 15 Days", "Below 15 Days"];
+    const buckets = ["Above 3 Months", "Above 2 Months", "Above 1 Month", "Above 15 Days", "Below 15 Days"];
     const tableData = {};
-    const grandTotals = { "Above 4 Months": 0,"Above 3 Months": 0, "Above 2 Months": 0, "Above 1 Month": 0, "Above 15 Days": 0, "Below 15 Days": 0, "Total": 0 };
+    const grandTotals = { "Above 3 Months": 0, "Above 2 Months": 0, "Above 1 Month": 0, "Above 15 Days": 0, "Below 15 Days": 0, "Total": 0 };
 
     discData.forEach(row => {
         const key = safeGet(row, groupByCol) || 'Unknown';
         if (!tableData[key]) {
-            tableData[key] = { "Above 4 Months": 0,"Above 3 Months": 0, "Above 2 Months": 0, "Above 1 Month": 0, "Above 15 Days": 0, "Below 15 Days": 0, "Total": 0, children: {} };
+            tableData[key] = { "Above 3 Months": 0, "Above 2 Months": 0, "Above 1 Month": 0, "Above 15 Days": 0, "Below 15 Days": 0, "Total": 0, children: {} };
         }
         
         const b = getAgingBucket(parseDateString(safeGet(row, 'disc. date')));
@@ -617,7 +617,7 @@ function buildAgingTable(data) {
             if (childCol) {
                 const cKey = safeGet(row, childCol) || 'Unknown';
                 if (!tableData[key].children[cKey]) {
-                    tableData[key].children[cKey] = { "Above 4 Months": 0,"Above 3 Months": 0, "Above 2 Months": 0, "Above 1 Month": 0, "Above 15 Days": 0, "Below 15 Days": 0, "Total": 0 };
+                    tableData[key].children[cKey] = { "Above 3 Months": 0, "Above 2 Months": 0, "Above 1 Month": 0, "Above 15 Days": 0, "Below 15 Days": 0, "Total": 0 };
                 }
                 tableData[key].children[cKey][b]++;
                 tableData[key].children[cKey].Total++;
@@ -652,7 +652,6 @@ function buildAgingTable(data) {
         
         tbody.innerHTML += `<tr class="parent-row" ${hasChildren ? `style="cursor:pointer;" onclick="toggleParentRow(this, 'aging-child-row-${rowIndex}')"` : ''}>
             <td><div style="display:flex; align-items:center;">${expandIcon}<strong>${k}</strong></div></td>
-            <td style="text-align: center;">${v["Above 4 Months"]}</td>
             <td style="text-align: center;">${v["Above 3 Months"]}</td>
             <td style="text-align: center;">${v["Above 2 Months"]}</td>
             <td style="text-align: center;">${v["Above 1 Month"]}</td>
@@ -665,7 +664,6 @@ function buildAgingTable(data) {
             for (const [cKey, cVal] of Object.entries(v.children)) {
                 tbody.innerHTML += `<tr class="child-row aging-child-row-${rowIndex}" style="display:none;">
                     <td class="child-cell" style="padding-left: 2.5rem; border-left: 2px solid var(--primary);">&#8627; ${cKey}</td>
-                    <td class="child-cell" style="text-align: center;">${cVal["Above 4 Months"]}</td>
                     <td class="child-cell" style="text-align: center;">${cVal["Above 3 Months"]}</td>
                     <td class="child-cell" style="text-align: center;">${cVal["Above 2 Months"]}</td>
                     <td class="child-cell" style="text-align: center;">${cVal["Above 1 Month"]}</td>
@@ -679,7 +677,6 @@ function buildAgingTable(data) {
 
     tbody.innerHTML += `<tr style="background: rgba(0,0,0,0.05);">
         <td><strong>Grand Total</strong></td>
-        <td style="text-align: center;"><strong>${grandTotals["Above 4 Months"]}</strong></td>
         <td style="text-align: center;"><strong>${grandTotals["Above 3 Months"]}</strong></td>
         <td style="text-align: center;"><strong>${grandTotals["Above 2 Months"]}</strong></td>
         <td style="text-align: center;"><strong>${grandTotals["Above 1 Month"]}</strong></td>
@@ -704,7 +701,7 @@ function updateMapFilters() {
     
     const validAgings = [...new Set(aData.map(r => getAgingBucket(parseDateString(safeGet(r, 'disc. date')))).filter(Boolean))];
     const aSel = document.getElementById('map-aging-filter'); aSel.innerHTML = `<option value="ALL">All Available Aging</option>`;
-    ["Above 4 Months","Above 3 Months", "Above 2 Months", "Above 1 Month", "Above 15 Days", "Below 15 Days"].forEach(v => {
+    ["Above 3 Months", "Above 2 Months", "Above 1 Month", "Above 15 Days", "Below 15 Days"].forEach(v => {
         if(validAgings.includes(v)) {
             const opt = document.createElement('option'); opt.value = v; opt.textContent = v;
             if(v === currentMapAging) opt.selected = true; aSel.appendChild(opt);
