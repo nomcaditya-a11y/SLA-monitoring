@@ -24,11 +24,11 @@ async function fetchMeterData(pkgType) {
     try {
         // Set path based on your exact file location inside your project
         if (pkgType === 'pkg1') {
-            filePath = "./source/pkg-01.xlsx";  // PKG1 ki file ka naam
+            filePath = "../source/pkg-01.xlsx";  // PKG1 ki file ka naam
         } else if (pkgType === 'pkg3') {
-            filePath = "./source/pkg-03.xlsx";  // PKG3 ki file ka naam
+            filePath = "../source/pkg-03.xlsx";  // PKG3 ki file ka naam
         } else {
-            filePath = "./source/pkg-01.xlsx";  // Fallback (agar kuch aur ho)
+            filePath = "../source/pkg-01.xlsx";  // Fallback (agar kuch aur ho)
         }
 
         console.log(`⏳ Fetching Local File: ${filePath}`);
