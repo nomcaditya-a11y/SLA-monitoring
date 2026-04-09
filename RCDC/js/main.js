@@ -189,6 +189,7 @@ function populateGlobalFiltersInitial() {
     syncDependentFilters();
 }
 
+// --- STRICT MM/DD/YYYY DATE PARSER ---
 function parseDateString(dateStr) {
     if (!dateStr || dateStr === '#N/A' || dateStr.toString().trim() === '') return null;
     let str = dateStr.toString().trim().split(' ')[0];
@@ -198,7 +199,7 @@ function parseDateString(dateStr) {
         return new Date((parseFloat(str) - 25569) * 86400 * 1000);
     }
 
-    // 2. Handle MM/DD/YYYY or DD-MM-YYYY
+    // 2. Handle MM/DD/YYYY or MM-DD-YYYY
     let parts = str.includes('/') ? str.split('/') : str.split('-');
     
     if (parts.length === 3) {
@@ -210,11 +211,13 @@ function parseDateString(dateStr) {
             let strictDate = new Date(`${year}-${month}-${day}T00:00:00`);
             if (!isNaN(strictDate.getTime())) return strictDate;
         } 
-        // DD/MM/YYYY
+        // 👇 YAHAN CHANGE KIYA HAI (MM/DD/YYYY) 👇
         else {
-            let day = parts[0].padStart(2, '0'); 
-            let month = parts[1].padStart(2, '0');   
+            let month = parts[0].padStart(2, '0'); // MONTH ab pehle aayega
+            let day = parts[1].padStart(2, '0');   // DAY ab doosre number par
             let year = parts[2];
+            
+            // Agar year sirf 2 digit ka hai (jaise 26), toh usko 2026 bana do
             if (year.length === 2) year = '20' + year; 
             
             let strictDate = new Date(`${year}-${month}-${day}T00:00:00`);
@@ -222,7 +225,7 @@ function parseDateString(dateStr) {
         }
     }
     
-    // 3. Fallback
+    // 3. Fallback for string dates (e.g., "Feb 15, 2026")
     let fallback = new Date(str);
     return isNaN(fallback.getTime()) ? null : fallback;
 }
