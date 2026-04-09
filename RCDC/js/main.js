@@ -265,116 +265,89 @@ function getMediumCounts(data) {
 }
 
 // --- HYBRID KPIs WITH LRCF, TODAY'S ACTIVITY & SAT LOGIC ---
+// --- DIRECT STATUS-BASED KPIs ---
 function updateKPIs(data) {
-    let totalDisc = [], recon = [], disc = [], pend = [], lrcf = [];
-    let todayDisc = [], todayReq = []; 
-    satTotal = []; satRecon = []; satDisc = []; // Reset SAT Arrays
-
-    const startVal = document.getElementById('filter-start').value;
-    const endVal = document.getElementById('filter-end').value;
-    const end = endVal ? new Date(endVal).setHours(23,59,59,999) : null;
-    const start = startVal ? new Date(startVal).setHours(0,0,0,0) : null;
-    let targetDate = end || start || new Date().setHours(23,59,59,999);
+    // Arrays for counting and holding data
+    let totalData = [], reconData = [], discData = [];
+    
+    // Arrays for SAT section
+    satTotal = []; satRecon = []; satDisc = []; 
 
     data.forEach(r => {
-        let originalStatus = (safeGet(r, 'Status') || "").toLowerCase();
-        let status = originalStatus;
-        
-        const dDate = parseDateString(safeGet(r, 'disc. date'));
-        const rDate = parseDateString(safeGet(r, 'Reconnection date') || safeGet(r, 'Reconnecion date'));
-        const rTime = rDate ? rDate.getTime() : null;
+        // 1. Excel se exact column values uthana (Case-insensitive)
+        let status = (safeGet(r, 'Status') || "").toLowerCase().trim();
+        let satValue = (safeGet(r, 'Sat Meters') || "").toString().toLowerCase().trim();
 
-        // TIME TRAVEL: Use strict timestamps
-        if (originalStatus.includes('reconnected') && rTime && rTime > targetDate) {
-            status = 'disconnected'; 
+        // 2. MAIN KPI LOGIC (Sirf Status ke basis par)
+        totalData.push(r); // Jo bhi data load hua hai, wo Total mein jayega
+
+        if (status.includes('recon')) {
+            // Agar status mein 'recon' (Reconnected) hai
+            reconData.push(r);
+        } else {
+            // Agar reconnected nahi hai, toh wo Still Disconnected/Pending mein jayega
+            discData.push(r);
         }
 
-        // Standard KPI Logic
-        if (r._isDValid) { totalDisc.push(r); }
-        if (r._isRValid && originalStatus.includes('reconnected')) { recon.push(r); }
-
-        if (r._isBacklog) {
-            if (status.includes('disconnected')) disc.push(r);
-            else if (status.includes('pending')) pend.push(r);
-            else if (status.includes('lrcf')) lrcf.push(r);
-        }
-
-        // TODAY LOGIC
-        if(isToday(dDate)) todayDisc.push(r);
-        if(isToday(rDate)) todayReq.push(r); 
-
-        // SAT LOGIC (New)
-        let satValue = (safeGet(r, 'sat meters') || "").toString().trim().toUpperCase();
-        if (satValue === "SAT") {
-            if (r._isDValid) satTotal.push(r);
-            if (r._isRValid && originalStatus.includes('reconnected')) satRecon.push(r);
-            if (r._isBacklog && status.includes('disconnected')) satDisc.push(r);
+        // 3. SAT METERS LOGIC (Agar 'Sat Meters' column mein "SAT" likha hai)
+        if (satValue.includes("sat")) {
+            satTotal.push(r);
+            
+            if (status.includes('recon')) {
+                satRecon.push(r);
+            } else {
+                satDisc.push(r);
+            }
         }
     });
 
-    // --- UPDATE DOM FOR MAIN KPIs ---
+    // ==========================================
+    // --- UPDATE HTML DOM FOR MAIN KPIs ---
+    // ==========================================
+    
     if(document.getElementById('kpi-total')) {
-        document.getElementById('kpi-total').innerText = totalDisc.length;
-        let tM = getMediumCounts(totalDisc);
+        document.getElementById('kpi-total').innerText = totalData.length;
+        let tM = getMediumCounts(totalData); // Comm Medium (RF/Cell) calculate karega
         if(document.getElementById('sub-total')) document.getElementById('sub-total').innerHTML = `Cell: ${tM.cell} | RF: ${tM.rf}`;
     }
 
     if(document.getElementById('kpi-reconnected')) {
-        document.getElementById('kpi-reconnected').innerText = recon.length;
-        let rM = getMediumCounts(recon);
+        document.getElementById('kpi-reconnected').innerText = reconData.length;
+        let rM = getMediumCounts(reconData);
         if(document.getElementById('sub-recon')) document.getElementById('sub-recon').innerHTML = `Cell: ${rM.cell} | RF: ${rM.rf}`;
     }
 
     if(document.getElementById('kpi-disconnected')) {
-        document.getElementById('kpi-disconnected').innerText = disc.length;
-        let dM = getMediumCounts(disc);
+        document.getElementById('kpi-disconnected').innerText = discData.length;
+        let dM = getMediumCounts(discData);
         if(document.getElementById('sub-disc')) document.getElementById('sub-disc').innerHTML = `Cell: ${dM.cell} | RF: ${dM.rf}`;
     }
 
-    if(document.getElementById('kpi-lrcf')) {
-        document.getElementById('kpi-lrcf').innerText = lrcf.length;
-        let lM = getMediumCounts(lrcf);
-        if(document.getElementById('sub-lrcf')) document.getElementById('sub-lrcf').innerHTML = `Cell: ${lM.cell} | RF: ${lM.rf}`;
-    }
-
-    if(document.getElementById('kpi-pending')) {
-        document.getElementById('kpi-pending').innerText = pend.length;
-        let pM = getMediumCounts(pend);
-        if(document.getElementById('sub-pend')) document.getElementById('sub-pend').innerHTML = `Cell: ${pM.cell} | RF: ${pM.rf}`;
-    }
-
-    if(document.getElementById('kpi-today-disc')) {
-        document.getElementById('kpi-today-disc').innerText = todayDisc.length;
-        let tdM = getMediumCounts(todayDisc);
-        if(document.getElementById('sub-today-disc')) document.getElementById('sub-today-disc').innerHTML = `Cell: ${tdM.cell} | RF: ${tdM.rf}`;
-    }
-
-    if(document.getElementById('kpi-today-req')) {
-        document.getElementById('kpi-today-req').innerText = todayReq.length;
-        let tReqM = getMediumCounts(todayReq);
-        if(document.getElementById('sub-today-req')) document.getElementById('sub-today-req').innerHTML = `Cell: ${tReqM.cell} | RF: ${tReqM.rf}`;
-    }
-
-    // --- UPDATE DOM FOR SAT CARD ---
+    // ==========================================
+    // --- UPDATE HTML DOM FOR SAT CARD ---
+    // ==========================================
+    
     if(document.getElementById('kpi-sat-total')) {
         document.getElementById('kpi-sat-total').innerText = satTotal.length;
         let sT = getMediumCounts(satTotal);
-        document.getElementById('sub-sat-total').innerText = `Cell: ${sT.cell} | RF: ${sT.rf}`;
+        if(document.getElementById('sub-sat-total')) document.getElementById('sub-sat-total').innerText = `Cell: ${sT.cell} | RF: ${sT.rf}`;
     }
 
     if(document.getElementById('kpi-sat-recon')) {
         document.getElementById('kpi-sat-recon').innerText = satRecon.length;
         let sR = getMediumCounts(satRecon);
-        document.getElementById('sub-sat-recon').innerText = `Cell: ${sR.cell} | RF: ${sR.rf}`;
+        if(document.getElementById('sub-sat-recon')) document.getElementById('sub-sat-recon').innerText = `Cell: ${sR.cell} | RF: ${sR.rf}`;
     }
 
     if(document.getElementById('kpi-sat-disc')) {
         document.getElementById('kpi-sat-disc').innerText = satDisc.length;
         
+        // SAT Disconnected meters ko Comm aur Non-Comm mein baatna
         let commMeters = satDisc.filter(r => {
             let c = (safeGet(r, 'Comm Status') || "").toLowerCase();
             return !c.includes('non') && c.trim() !== "";
         });
+        
         let nonCommMeters = satDisc.filter(r => {
             let c = (safeGet(r, 'Comm Status') || "").toLowerCase();
             return c.includes('non') || c.trim() === "";
@@ -386,10 +359,6 @@ function updateKPIs(data) {
         if(document.getElementById('sub-sat-disc-comm')) document.getElementById('sub-sat-disc-comm').innerText = `C:${commCounts.cell} | R:${commCounts.rf}`;
         if(document.getElementById('sub-sat-disc-non')) document.getElementById('sub-sat-disc-non').innerText = `C:${nonCounts.cell} | R:${nonCounts.rf}`;
     }
-
-    // Save Data to Global Memory
-    todayExportData.disc = todayDisc;
-    todayExportData.req = todayReq;
 }
 
 // --- CHARTS ---
