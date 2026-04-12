@@ -30,6 +30,11 @@
             <h2 class="text-xl font-bold text-blue-600 dark:text-blue-500 mb-2">RCDC CSPDCL</h2>
             <p class="text-xs text-slate-500 dark:text-slate-400">View Analytics</p>
         </a>
+
+        <a href="DTLoading/index.html" id="btn-dtloading" class="hidden block w-64 bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-orange-500 hover:shadow-orange-500/20 hover:shadow-lg transition-all text-center group">
+            <h2 class="text-xl font-bold text-orange-600 dark:text-orange-400 mb-2">DT Loading Analysis</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">View transformer load dashboard</p>
+        </a>
     </div>
 
     <a href="admin.html" id="btn-admin" class="hidden mt-8 px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-full text-sm font-bold shadow-md transition">⚙️ Manage Users (Admin Only)</a>
@@ -59,6 +64,16 @@
             }
             if (rights.role === 'admin' || (rights.dashboards && rights.dashboards.includes('RCDC'))) {
                 document.getElementById('btn-rcdc')?.classList.remove('hidden');
+            }
+            if (
+                rights.role === 'admin' ||
+                (rights.dashboards && (
+                    rights.dashboards.includes('DT Loading Analysis') ||
+                    rights.dashboards.includes('DT_LOADING') ||
+                    rights.dashboards.includes('DTLoading')
+                ))
+            ) {
+                document.getElementById('btn-dtloading')?.classList.remove('hidden');
             }
             if (rights.role === 'admin') {
                 document.getElementById('btn-admin')?.classList.remove('hidden');

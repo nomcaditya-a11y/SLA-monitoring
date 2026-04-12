@@ -7,6 +7,7 @@ const dom = {
   appShell: document.querySelector(".app-shell"),
   sidebarToggle: document.getElementById("sidebarToggle"),
   themeToggle: document.getElementById("themeToggle"),
+  kpiCards: [...document.querySelectorAll(".kpi-card")],
   
   regionFilter: document.getElementById("regionFilter"),
   circleFilter: document.getElementById("circleFilter"),
@@ -37,12 +38,20 @@ const dom = {
   loadingState: document.getElementById("loadingState"),
   emptyState: document.getElementById("emptyState"),
   sidebarHealthStatus: document.getElementById("sidebarHealthStatus"),
+  kpiModal: document.getElementById("kpiModal"),
+  kpiModalBackdrop: document.getElementById("kpiModalBackdrop"),
+  kpiModalClose: document.getElementById("kpiModalClose"),
+  kpiModalTitle: document.getElementById("kpiModalTitle"),
+  kpiModalSummary: document.getElementById("kpiModalSummary"),
+  kpiModalDownload: document.getElementById("kpiModalDownload"),
+  kpiModalTableBody: document.getElementById("kpiModalTableBody"),
 };
 
 const appState = {
   rawData: [], filteredData: [], mapFilteredData: [],
   filters: { region: "", circle: "", division: "", zone: "", substation: "", feeder: "", date: "" },
-  charts: {}, map: null, markersLayer: null, radarLayer: null, mapLayers: {}
+  charts: {}, map: null, markersLayer: null, radarLayer: null, mapLayers: {},
+  activeKpiKey: null
 };
 
 const CASCADE_HIERARCHY = [
@@ -133,6 +142,26 @@ function setupUi() {
     });
   });
   dom.mLoad.addEventListener("change", applyMapFilters);
+
+  dom.kpiCards.forEach((card) => {
+    card.addEventListener("click", (event) => {
+      const action = event.target.closest("[data-kpi-action]");
+      if (!action) return;
+
+      const kpiKey = card.dataset.kpi;
+      if (action.dataset.kpiAction === "view") openKpiModal(kpiKey);
+      if (action.dataset.kpiAction === "download") downloadKpiRecords(kpiKey);
+    });
+  });
+
+  dom.kpiModalBackdrop.addEventListener("click", closeKpiModal);
+  dom.kpiModalClose.addEventListener("click", closeKpiModal);
+  dom.kpiModalDownload.addEventListener("click", () => {
+    if (appState.activeKpiKey) downloadKpiRecords(appState.activeKpiKey);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !dom.kpiModal.classList.contains("hidden")) closeKpiModal();
+  });
 }
 
 function syncSidebarState() {
@@ -241,6 +270,92 @@ function renderKpis(aggregates) {
   dom.sidebarHealthStatus.textContent = topStatus && topStatus[1] > 0 ? topStatus[0] : "No Data";
 }
 
+function getKpiRecords(kpiKey) {
+  if (kpiKey === "total") return [...appState.filteredData];
+  return appState.filteredData.filter((record) => record.status === kpiKey);
+}
+
+function getKpiLabel(kpiKey) {
+  if (kpiKey === "total") return "Total DTR Count";
+  return `${kpiKey} Count`;
+}
+
+function openKpiModal(kpiKey) {
+  const records = getKpiRecords(kpiKey);
+  appState.activeKpiKey = kpiKey;
+  dom.kpiModalTitle.textContent = getKpiLabel(kpiKey);
+  dom.kpiModalSummary.textContent = `${formatInteger(records.length)} records in the current filter context`;
+  renderKpiModalTable(records);
+  dom.kpiModal.classList.remove("hidden");
+  dom.kpiModal.setAttribute("aria-hidden", "false");
+}
+
+function closeKpiModal() {
+  appState.activeKpiKey = null;
+  dom.kpiModal.classList.add("hidden");
+  dom.kpiModal.setAttribute("aria-hidden", "true");
+}
+
+function renderKpiModalTable(records) {
+  dom.kpiModalTableBody.innerHTML = "";
+  if (!records.length) {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td colspan="12" style="text-align:center; color:var(--text-secondary);">No records available for this KPI.</td>`;
+    dom.kpiModalTableBody.appendChild(row);
+    return;
+  }
+
+  records
+    .slice()
+    .sort((a, b) => b.utilization - a.utilization)
+    .forEach((record) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td><strong>${record.dtrCode}</strong></td>
+        <td>${record.dtrName}</td>
+        <td>${record.region}</td>
+        <td>${record.circle}</td>
+        <td>${record.division}</td>
+        <td>${record.substationName}</td>
+        <td>${record.feederName}</td>
+        <td>${formatNumber(record.capacity)}</td>
+        <td>${formatNumber(record.maxKva)}</td>
+        <td style="color:${statusConfig[record.status].color}; font-weight:700;">${formatNumber(record.utilization)}%</td>
+        <td><span class="status-badge status-badge--${record.status.toLowerCase()}">${record.status}</span></td>
+        <td>${record.informationDate || "-"}</td>
+      `;
+      dom.kpiModalTableBody.appendChild(row);
+    });
+}
+
+function downloadKpiRecords(kpiKey) {
+  const records = getKpiRecords(kpiKey);
+  if (!records.length) return;
+
+  const rows = records.map((record) => ({
+    "DTR Code": record.dtrCode,
+    "DTR Name": record.dtrName,
+    Region: record.region,
+    Circle: record.circle,
+    Division: record.division,
+    Zone: record.zone,
+    Substation: record.substationName,
+    Feeder: record.feederName,
+    "Capacity (kVA)": record.capacity,
+    "MAX kVA": record.maxKva,
+    "Utilization %": record.utilization,
+    Status: record.status,
+    Latitude: record.latitude,
+    Longitude: record.longitude,
+    Date: record.informationDate,
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "KPI Data");
+  XLSX.writeFile(workbook, `${sanitizeFileName(getKpiLabel(kpiKey))}_${getTodayStamp()}.xlsx`);
+}
+
 // --- TABLES ---
 function renderHierarchyTable(hierarchy) {
   dom.hierarchyTableBody.innerHTML = "";
@@ -316,18 +431,80 @@ function renderCharts(aggregates, records) {
   }, { responsive: true, maintainAspectRatio: false, cutout: "68%", plugins: { legend: { position: "right" } } });
 
   let maxVal = records.length ? Math.max(...records.map(r => Math.max(r.capacity, r.maxKva))) * 1.1 : 100;
-  
+
+  const scatterDatasets = ["Underloaded", "Normal", "Critical", "Overloaded"].map((status) => ({
+    type: "scatter",
+    label: status,
+    data: records
+      .filter((record) => record.status === status)
+      .map((record, index) => ({
+        x: addScatterJitter(record.capacity, index, records.length),
+        y: addScatterJitter(record.maxKva, index + 3, records.length),
+        actualX: record.capacity,
+        actualY: record.maxKva,
+        dtr: record.dtrCode,
+        status: record.status
+      })),
+    backgroundColor: `${statusConfig[status].color}CC`,
+    borderColor: statusConfig[status].color,
+    pointRadius: 4.5,
+    pointHoverRadius: 7,
+    pointBorderWidth: 1,
+    pointBorderColor: "#ffffff",
+    order: 1
+  }));
+
   updateChart("capacityChart", "scatter", {
     datasets: [
       { type: 'line', label: '100% Load Threshold', data: [{x: 0, y: 0}, {x: maxVal, y: maxVal}], borderColor: statusConfig.Overloaded.color, borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 0, order: 2 },
-      { type: 'scatter', label: "Transformers", data: records.map((r) => ({ x: r.capacity, y: r.maxKva, dtr: r.dtrCode })), backgroundColor: records.map((r) => statusConfig[r.status].color), pointRadius: 5, pointHoverRadius: 8, order: 1 }
+      ...scatterDatasets
     ],
-  }, { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { filter: (item) => item.text === '100% Load Threshold' } }, tooltip: { callbacks: { label: (ctx) => ctx.dataset.type === 'line' ? 'Overload Threshold' : `DT: ${ctx.raw.dtr} | Cap: ${ctx.raw.x} | Load: ${ctx.raw.y}` } } }, scales: { x: { title: { display: true, text: "Capacity (kVA)" } }, y: { title: { display: true, text: "MAX kVA" } } } });
+  }, {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 8, right: 10, bottom: 0, left: 0 } },
+    plugins: {
+      legend: {
+        position: "top",
+        labels: {
+          usePointStyle: true,
+          pointStyle: "circle",
+          boxWidth: 10,
+          padding: 18
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => {
+            if (ctx.dataset.type === "line") return "100% load threshold";
+            return `DT: ${ctx.raw.dtr} | Cap: ${formatNumber(ctx.raw.actualX)} | Load: ${formatNumber(ctx.raw.actualY)} | ${ctx.raw.status}`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        title: { display: true, text: "Capacity (kVA)" },
+        suggestedMax: maxVal
+      },
+      y: {
+        title: { display: true, text: "MAX kVA" },
+        suggestedMax: maxVal
+      }
+    }
+  });
 }
 
 function updateChart(canvasId, type, data, options) {
   if (appState.charts[canvasId]) { appState.charts[canvasId].data = data; appState.charts[canvasId].options = options; appState.charts[canvasId].update();
   } else { appState.charts[canvasId] = new Chart(document.getElementById(canvasId), { type, data, options }); }
+}
+
+function addScatterJitter(value, index, total) {
+  if (!Number.isFinite(value)) return value;
+  const spread = total > 250 ? 1.8 : 1.2;
+  const offset = (((index % 7) - 3) / 3) * spread;
+  return Math.max(0, value + offset);
 }
 
 // --- MAP ---
@@ -420,3 +597,5 @@ function toggleEmptyState(isEmpty) { dom.emptyState.classList.toggle("hidden", !
 function showErrorState(error) { console.error(error); dom.emptyState.classList.remove("hidden"); dom.emptyState.innerHTML = `<h3>Unable to load data</h3><p>${error.message}</p>`; }
 function formatNumber(value) { return Number(value || 0).toLocaleString("en-IN", { maximumFractionDigits: 1 }); }
 function formatInteger(value) { return Number(value || 0).toLocaleString("en-IN"); }
+function sanitizeFileName(value) { return String(value).replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_"); }
+function getTodayStamp() { return new Date().toISOString().slice(0, 10); }

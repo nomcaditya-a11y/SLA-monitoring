@@ -10,6 +10,34 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="style.css">
+  <script>
+    (() => {
+      const authStatus = sessionStorage.getItem("genus_auth");
+      const storedRights = sessionStorage.getItem("user_rights");
+
+      if (authStatus !== "true" || !storedRights) {
+        window.location.replace("../index.html");
+        return;
+      }
+
+      try {
+        const rights = JSON.parse(storedRights);
+        const hasAccess =
+          rights.role === "admin" ||
+          (Array.isArray(rights.dashboards) && (
+            rights.dashboards.includes("DT Loading Analysis") ||
+            rights.dashboards.includes("DT_LOADING") ||
+            rights.dashboards.includes("DTLoading")
+          ));
+
+        if (!hasAccess) {
+          window.location.replace("../portal.html");
+        }
+      } catch (error) {
+        window.location.replace("../index.html");
+      }
+    })();
+  </script>
 </head>
 <body>
   <div class="app-shell">
@@ -45,7 +73,7 @@
       <div class="sidebar__footer">
         <div class="sidebar-stat">
           <span class="sidebar-stat__label">Live Status</span>
-          <strong id="sidebarHealthStatus">Monitoring</strong>
+          <strong id="sidebarHealthStatus">DT Load Monitoring</strong>
         </div>
       </div>
     </aside>
@@ -55,7 +83,7 @@
       <header class="topbar">
         <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
           <div class="topbar__title">
-            <p class="eyebrow">Enterprise Operations</p>
+            <p class="eyebrow">NOMC Operations</p>
             <div class="topbar__title-row">
               <img class="topbar__logo" src="../RCDC/js/logo.webp" alt="RCDC logo">
               <h2>DT Load Dashboard</h2>
@@ -68,11 +96,51 @@
       </header>
 
       <section class="kpi-grid">
-        <article class="card kpi-card"><div class="kpi-card__header"><span>Total DTR Count</span><span class="status-dot status-dot--indigo"></span></div><strong id="totalDtr" class="kpi-card__value">0</strong><p class="kpi-card__meta">Visible assets in context</p></article>
-        <article class="card kpi-card"><div class="kpi-card__header"><span>Underloaded Count</span><span class="status-dot status-dot--underloaded"></span></div><strong id="underloadedCount" class="kpi-card__value">0</strong><p class="kpi-card__meta">Assets &lt; 50% load</p></article>
-        <article class="card kpi-card"><div class="kpi-card__header"><span>Normal Count</span><span class="status-dot status-dot--normal"></span></div><strong id="normalCount" class="kpi-card__value">0</strong><p class="kpi-card__meta">Assets 50% - 80% load</p></article>
-        <article class="card kpi-card"><div class="kpi-card__header"><span>Critical Count</span><span class="status-dot status-dot--critical"></span></div><strong id="criticalCount" class="kpi-card__value">0</strong><p class="kpi-card__meta">Assets 80% - 100% load</p></article>
-        <article class="card kpi-card"><div class="kpi-card__header"><span>Overloaded Count</span><span class="status-dot status-dot--overloaded"></span></div><strong id="overloadedCount" class="kpi-card__value">0</strong><p class="kpi-card__meta">Assets &gt; 100% load</p></article>
+        <article class="card kpi-card" data-kpi="total">
+          <div class="kpi-card__header"><span>Total DTR Count</span><span class="status-dot status-dot--indigo"></span></div>
+          <strong id="totalDtr" class="kpi-card__value">0</strong>
+          <p class="kpi-card__meta">Visible Meters in context</p>
+          <div class="kpi-card__actions">
+            <button class="kpi-action" type="button" data-kpi-action="view">View</button>
+            <button class="kpi-action kpi-action--download" type="button" data-kpi-action="download">Download</button>
+          </div>
+        </article>
+        <article class="card kpi-card" data-kpi="Underloaded">
+          <div class="kpi-card__header"><span>Underloaded Count</span><span class="status-dot status-dot--underloaded"></span></div>
+          <strong id="underloadedCount" class="kpi-card__value">0</strong>
+          <p class="kpi-card__meta">Meters &lt; 50% load</p>
+          <div class="kpi-card__actions">
+            <button class="kpi-action" type="button" data-kpi-action="view">View</button>
+            <button class="kpi-action kpi-action--download" type="button" data-kpi-action="download">Download</button>
+          </div>
+        </article>
+        <article class="card kpi-card" data-kpi="Normal">
+          <div class="kpi-card__header"><span>Normal Count</span><span class="status-dot status-dot--normal"></span></div>
+          <strong id="normalCount" class="kpi-card__value">0</strong>
+          <p class="kpi-card__meta">Meters 50% - 80% load</p>
+          <div class="kpi-card__actions">
+            <button class="kpi-action" type="button" data-kpi-action="view">View</button>
+            <button class="kpi-action kpi-action--download" type="button" data-kpi-action="download">Download</button>
+          </div>
+        </article>
+        <article class="card kpi-card" data-kpi="Critical">
+          <div class="kpi-card__header"><span>Critical Count</span><span class="status-dot status-dot--critical"></span></div>
+          <strong id="criticalCount" class="kpi-card__value">0</strong>
+          <p class="kpi-card__meta">Meters 80% - 100% load</p>
+          <div class="kpi-card__actions">
+            <button class="kpi-action" type="button" data-kpi-action="view">View</button>
+            <button class="kpi-action kpi-action--download" type="button" data-kpi-action="download">Download</button>
+          </div>
+        </article>
+        <article class="card kpi-card" data-kpi="Overloaded">
+          <div class="kpi-card__header"><span>Overloaded Count</span><span class="status-dot status-dot--overloaded"></span></div>
+          <strong id="overloadedCount" class="kpi-card__value">0</strong>
+          <p class="kpi-card__meta">Meters &gt; 100% load</p>
+          <div class="kpi-card__actions">
+            <button class="kpi-action" type="button" data-kpi-action="view">View</button>
+            <button class="kpi-action kpi-action--download" type="button" data-kpi-action="download">Download</button>
+          </div>
+        </article>
       </section>
 
       <section class="card chart-card" style="width: 100%;">
@@ -150,7 +218,7 @@
       <section class="card table-card" id="critical-table">
         <div class="section-heading">
           <div>
-            <p class="section-heading__eyebrow">Priority Assets</p>
+            <p class="section-heading__eyebrow">Priority Meters</p>
             <h3>Critical DTR Table</h3>
           </div>
           <div class="table-summary" id="tableSummary">Sorted by utilization descending</div>
@@ -178,6 +246,37 @@
         <p>Try broadening your selection.</p>
       </section>
     </main>
+  </div>
+
+  <div class="kpi-modal hidden" id="kpiModal" aria-hidden="true">
+    <div class="kpi-modal__backdrop" id="kpiModalBackdrop"></div>
+    <div class="kpi-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="kpiModalTitle">
+      <div class="kpi-modal__header">
+        <div>
+          <p class="eyebrow">KPI Records</p>
+          <h3 id="kpiModalTitle">KPI Details</h3>
+          <p class="kpi-modal__summary" id="kpiModalSummary">0 records</p>
+        </div>
+        <div class="kpi-modal__controls">
+          <button class="kpi-action kpi-action--download" id="kpiModalDownload" type="button">Download</button>
+          <button class="icon-button" id="kpiModalClose" type="button" aria-label="Close details">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+      <div class="table-wrap kpi-modal__table">
+        <table>
+          <thead>
+            <tr>
+              <th>DTR Code</th><th>DTR Name</th><th>Region</th><th>Circle</th>
+              <th>Division</th><th>Substation</th><th>Feeder</th><th>Capacity</th>
+              <th>MAX kVA</th><th>Util %</th><th>Status</th><th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="kpiModalTableBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
