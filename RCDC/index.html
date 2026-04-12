@@ -23,6 +23,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Genus Power RCDC Dashboard</title>
+ <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="icon" type="image/png" href="https://genuspower.com/wp-content/uploads/2022/07/genus-favicon.png" sizes="192x192" />
     <link rel="apple-touch-icon" href="https://genuspower.com/wp-content/uploads/2022/07/genus-favicon.png" />    
@@ -53,8 +54,8 @@
 </a>
         <div class="header-controls">
             <div class="pkg-switcher">
-    <button id="btn-pkg1" class="pkg-btn" style="display: none;" onclick="switchPackage('pkg1')">PKG-1</button>
-    <button id="btn-pkg3" class="pkg-btn active" style="display: none;" onclick="switchPackage('pkg3')">PKG-3</button>
+    <button id="btn-pkg1" class="pkg-btn active" style="display: none;" onclick="switchPackage('pkg1')">PKG-1</button>
+    <button id="btn-pkg3" class="pkg-btn" style="display: none;" onclick="switchPackage('pkg3')">PKG-3</button>
 </div>
             <button onclick="refreshData()" class="btn-secondary refresh-btn" title="Refresh Data">🔄 Refresh</button>
             <button id="theme-btn" onclick="toggleTheme()" class="btn-secondary refresh-btn" title="Toggle Dark Mode">🌙</button>
