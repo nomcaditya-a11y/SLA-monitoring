@@ -81,17 +81,23 @@
     <main class="main-content" id="dashboard">
       
       <header class="topbar">
-        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-          <div class="topbar__title">
-            <p class="eyebrow">NOMC Operations</p>
+        <div class="topbar__inner">
+          <div class="topbar__title-block">
+            <!-- <div class="topbar__badge">DT Loading Analysis</div> -->
             <div class="topbar__title-row">
               <img class="topbar__logo" src="../RCDC/js/logo.webp" alt="RCDC logo">
-              <h2>DT Load Dashboard</h2>
+              <div class="topbar__headline">
+                <h2>DT Load Dashboard</h2>
+                <p class="topbar__subcopy">NOMC Analysis and Operations</p>
+              </div>
             </div>
           </div>
-          <button class="icon-button" id="themeToggle" type="button" title="Toggle Theme" style="border-radius: 50%;">
-            <i class="fa-solid fa-moon"></i>
-          </button>
+          <div class="topbar__actions">
+            <a class="portal-link" href="../portal.html">Return to Portal</a>
+            <button class="icon-button" id="themeToggle" type="button" title="Toggle Theme" style="border-radius: 50%;">
+              <i class="fa-solid fa-moon"></i>
+            </button>
+          </div>
         </div>
       </header>
 

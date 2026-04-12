@@ -21,6 +21,7 @@
                 <h3 class="font-bold text-emerald-400 text-sm mb-3 border-b border-slate-700 pb-1">Dashboards Access</h3>
                 <label class="flex items-center space-x-2 text-sm"><input type="checkbox" id="chk-sla" value="SLA" class="w-4 h-4 accent-emerald-500"><span>NOMC SLA</span></label>
                 <label class="flex items-center space-x-2 text-sm mt-3"><input type="checkbox" id="chk-rcdc" value="RCDC" class="w-4 h-4 accent-emerald-500"><span>RCDC</span></label>
+                <label class="flex items-center space-x-2 text-sm mt-3"><input type="checkbox" id="chk-dtloading" value="DT Loading Analysis" class="w-4 h-4 accent-emerald-500"><span>DT Loading Analysis</span></label>
             </div>
             <div>
                 <h3 class="font-bold text-blue-400 text-sm mb-3 border-b border-slate-700 pb-1">Package Rights</h3>
@@ -62,6 +63,7 @@
             const dashboards = [];
             if(document.getElementById('chk-sla').checked) dashboards.push('SLA');
             if(document.getElementById('chk-rcdc').checked) dashboards.push('RCDC');
+            if(document.getElementById('chk-dtloading').checked) dashboards.push('DT Loading Analysis');
             
             const packages = [];
             if(document.getElementById('chk-pkg1').checked) packages.push('PKG1');
